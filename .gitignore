@@ -1,0 +1,33 @@
+# Data: raw corpora and anything containing learner text stay local.
+# Publish scripts and edit IDs instead, so others can rebuild the data.
+data/raw/
+data/interim/
+data/processed/
+*.m2
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+.venv/
+venv/
+.env
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.ipynb_checkpoints/
+
+# Training and logging artefacts (adapters go to the Hugging Face Hub)
+outputs/
+checkpoints/
+adapters/
+wandb/
+mlruns/
+
+# OS and editor files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
