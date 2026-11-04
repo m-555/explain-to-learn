@@ -1,0 +1,41 @@
+[build-system]
+requires = ["hatchling>=1.27"]
+build-backend = "hatchling.build"
+
+[project]
+name = "explain-to-learn"
+version = "0.1.0"
+description = "Level-matched explanations and hints for grammar corrections, grounded in a grammar graph."
+readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE"]
+authors = [{ name = "Mohsen Mirzaei" }]
+requires-python = ">=3.11"
+dependencies = []
+
+[project.optional-dependencies]
+dev = ["pytest>=8.0", "ruff>=0.6"]
+data = ["errant>=3.0", "spacy>=3.7"]
+graph = ["networkx>=3.2", "pyyaml>=6.0", "rdflib>=7.0"]
+# PyTorch is installed separately (CUDA 12.8 or newer build), see README.
+model = [
+    "transformers>=4.46",
+    "peft>=0.13",
+    "trl>=0.12",
+    "accelerate>=1.0",
+    "datasets>=3.0",
+]
+demo = ["gradio>=5.0"]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/explain_to_learn"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP", "SIM"]
