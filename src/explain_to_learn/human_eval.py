@@ -29,8 +29,8 @@ FLAG = "invented_rule"
 SCALE = {"no": 0, "partly": 1, "yes": 2}
 FLAG_VALUES = {"no": 0, "yes": 1}
 RATING_COLUMNS = (*DIMENSIONS, FLAG, "comment")
-SHEET_COLUMNS = ("item_id", "level", "sentence", "corrected", "edit", "explanation", "hint")
-KEY_COLUMNS = ("item_id", "system", "edit_id", "error_category", "level")
+SHEET_COLUMNS = ("item_id", "level", "mode", "sentence", "corrected", "edit", "feedback")
+KEY_COLUMNS = ("item_id", "system", "edit_id", "error_category", "level", "mode")
 GROUPINGS = {
     "system": ("system",),
     "category": ("error_category", "system"),

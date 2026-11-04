@@ -1,5 +1,6 @@
 """Rating sheet building, the key, and the per-system summaries, on synthetic items."""
 
+import dataclasses
 import importlib.util
 from pathlib import Path
 
@@ -19,6 +20,7 @@ from explain_to_learn.human_eval import (
     write_csv,
     write_summaries,
 )
+from explain_to_learn.prompts import detokenize
 
 SCRIPT = Path(__file__).parents[1] / "scripts" / "make_rating_sheet.py"
 SYSTEMS = ("A", "B", "C", "D")
@@ -55,13 +57,16 @@ def make_edit(idx: int) -> Edit:
     )
 
 
+def generation(system: str, edit: Edit, mode: str = "explain") -> dict:
+    """A generation record as written by `scripts/run_system.py`."""
+    parsed = {"concept": "Agreement", "explanation": f"{system} explains", "hint": f"{system} hint"}
+    return {"edit_id": edit.edit_id, "level": edit.cefr_level, "mode": mode, "parsed": parsed}
+
+
 EDITS = {edit.edit_id: edit for edit in map(make_edit, range(12))}
 # Each system's feedback names the system, so the tests can check the key joins back.
 FEEDBACK = {
-    system: {
-        edit_id: {"edit_id": edit_id, "explanation": f"{system} explains", "hint": f"{system} hint"}
-        for edit_id in EDITS
-    }
+    system: {edit_id: generation(system, edit) for edit_id, edit in EDITS.items()}
     for system in SYSTEMS
 }
 
@@ -94,9 +99,9 @@ def test_key_joins_back_to_each_systems_feedback():
 
     for row in sheet:
         entry = key_by_item[row["item_id"]]
-        assert row["explanation"] == f"{entry['system']} explains"
+        assert row["feedback"] == f"{entry['system']} explains"
         assert row["level"] == entry["level"]
-        assert EDITS[entry["edit_id"]].original == row["sentence"]
+        assert detokenize(EDITS[entry["edit_id"]].original) == row["sentence"]
 
 
 def test_second_rater_sheet_is_a_subset_in_sheet_order():
@@ -106,12 +111,24 @@ def test_second_rater_sheet_is_a_subset_in_sheet_order():
     assert [row for row in sheet if row in second] == second
 
 
-def test_levels_and_edits_are_shown_as_raters_need_them():
-    sheet, _, key = sheets()
-    levels = {row["edit_id"]: row["level"] for row in key}
+def test_sheet_shows_readable_text_and_the_feedback_for_the_mode():
+    edit = dataclasses.replace(
+        make_edit(0), original="She do n't like it .", original_text="do", corrected_text="does"
+    )
+    outputs = {
+        "A": {edit.edit_id: generation("A", edit, mode="hint")},
+        "B": {edit.edit_id: generation("B", edit) | {"parsed": None}},
+    }
+    sheet, _, key = make_rating_sheet.make_sheets(
+        [edit.edit_id], {edit.edit_id: edit}, outputs, 1, 1
+    )
+    by_system = {k["system"]: row for k, row in zip(key, sheet, strict=True)}
 
-    assert set(levels.values()) <= {"A2", "B1", "B2"}
-    assert all(row["edit"] == "go -> goes" for row in sheet)
+    assert by_system["A"]["sentence"] == "She don't like it."
+    assert by_system["A"]["edit"] == "do -> does"
+    assert (by_system["A"]["mode"], by_system["A"]["feedback"]) == ("hint", "A hint")
+    assert by_system["B"]["feedback"] == ""
+    assert by_system["A"]["level"] == "A2"
 
 
 def test_missing_feedback_is_an_error():

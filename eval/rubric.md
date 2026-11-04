@@ -10,15 +10,19 @@ The rating sheet shows:
 
 | Column | Meaning |
 | --- | --- |
-| `level` | The learner's CEFR level (A2, B1 or B2) that the feedback was written for |
+| `level` | The learner's CEFR level (A1 to C2) that the feedback was written for |
+| `mode` | `explain` or `hint` (see below) |
 | `sentence` | The learner's original sentence |
 | `corrected` | The corrected sentence |
 | `edit` | The words that changed, as `original -> correction` (`-` means nothing) |
-| `explanation` | The system's explanation of the edit |
-| `hint` | The system's hint, meant to help the learner find the correction alone |
+| `feedback` | What the learner sees: an explanation or a hint |
 
-You rate the explanation and the hint together, as one piece of feedback. The system
-names are hidden and the items are in random order.
+- In **explain** mode the feedback is an explanation: it should name the original and
+  corrected words and say why the correction is right.
+- In **hint** mode the feedback is a hint: it should point the learner to the error and
+  the rule without giving the corrected words, so that the learner can fix it alone.
+
+The system names are hidden and the items are in random order.
 
 ## Scale
 
@@ -54,7 +58,7 @@ already known from the correction, so the dimensions change as follows:
 1. Rate what is written, not what the system probably meant.
 2. Rate each dimension on its own. A wrong rule can still point to the right words.
 3. The correction is given and is not rated. If you think it is wrong, say so in
-   `comment`, and rate the feedback as an explanation of the correction shown.
+   `comment`, and rate the feedback as feedback on the correction shown.
 4. If the feedback is empty, unreadable or about a different edit, rate all four
    dimensions `no` and the flag `no`.
 5. Judge rules against standard descriptions of English grammar, such as a learner's
@@ -65,30 +69,31 @@ already known from the correction, so the dimensions change as follows:
 
 ## Dimensions
 
-The examples are invented. All use this item unless stated otherwise:
+The examples are invented. All use this edit unless stated otherwise:
 
-> **Level** A2 · **Sentence** *She don't like coffee .* · **Corrected** *She doesn't like
-> coffee .* · **Edit** `don't -> doesn't`
+> **Level** A2 · **Sentence** *She don't like coffee.* · **Corrected** *She doesn't like
+> coffee.* · **Edit** `do -> does`
 
 ### 1. Rule correct (`rule_correct`)
 
-*Is the grammar the feedback states true, and does it explain this edit?*
+*Is the grammar the feedback states true, and does it fit this edit?*
 
-- **yes**: Every grammar statement is correct and the main rule explains why the
-  correction is needed.
-- **partly**: The main rule points in the right direction but is incomplete,
-  over-general or imprecise in a way that could mislead in other sentences, or it is
-  correct but the feedback also contains a smaller wrong statement. Also `partly` when
-  the feedback gives only the correct form and states no rule at all.
-- **no**: The main rule is wrong, or it explains a different kind of error than the one
+- **yes**: Every grammar statement is correct, and the rule given (or, in a hint, the
+  rule pointed to) is the reason the correction is needed.
+- **partly**: The rule points in the right direction but is incomplete, over-general or
+  imprecise in a way that could mislead in other sentences; or it is correct but the
+  feedback also contains a smaller wrong statement; or the feedback says nothing about
+  the grammar at all (only the correct form, or only where to look).
+- **no**: The main rule is wrong, or it is about a different kind of error than the one
   corrected.
 
-| Rating | Feedback |
-| --- | --- |
-| yes | "With *he*, *she* or *it*, use *doesn't*, not *don't*." |
-| partly | "With one person, always add *-s* to the verb." (Over-general: *she can*, *she must*.) |
-| partly | "Write *doesn't* here." (Correct form, no rule.) |
-| no | "Use *doesn't* because the sentence is about the past." |
+| Mode | Rating | Feedback |
+| --- | --- | --- |
+| explain | yes | "After *she*, use *does*, not *do*: *she doesn't like*." |
+| explain | partly | "With one person, always add *-s* to the verb." (Over-general: *she can*, *she must*.) |
+| explain | partly | "Write *doesn't* here." (Correct form, nothing about the grammar.) |
+| explain | no | "Use *doesn't* because the sentence is about the past." |
+| hint | yes | "Which form of *do* goes with *he*, *she* and *it*?" |
 
 ### 2. Error located (`error_located`)
 
@@ -101,53 +106,57 @@ The examples are invented. All use this item unless stated otherwise:
   longer edit.
 - **no**: It does not point to any place, or it points to the wrong words.
 
-| Rating | Feedback |
-| --- | --- |
-| yes | "*don't* should be *doesn't* after *she*." |
-| partly | "Look at the verbs in this sentence." (Two verbs: *don't*, *like*.) |
-| no | "Check the word *coffee*." |
+| Mode | Rating | Feedback |
+| --- | --- | --- |
+| explain | yes | "*don't* should be *doesn't* after *she*." |
+| hint | partly | "Look at the verbs in this sentence." (Two verbs: *do*, *like*.) |
+| hint | no | "Check the word *coffee*." |
 
 ### 3. Helps the learner fix it (`helps_fix`)
 
 *Would a learner at this level know what to do after reading the feedback?*
 
-- **yes**: The learner can make the correction, and could avoid the error next time,
-  using the explanation and the hint.
+- **yes**: The learner can make the correction, and could avoid the error next time.
+  In hint mode: the learner can find the correction from the hint alone.
 - **partly**: The feedback gives a useful direction but leaves an important step open
   (it says what is wrong but not what to use instead, or the hint is too vague to act
-  on without the explanation).
+  on). In hint mode, also `partly` when the hint gives away the corrected words: the
+  learner can copy the answer but does not have to work it out.
 - **no**: There is nothing the learner can act on, or following the feedback would lead
   to another wrong form.
 
-Giving the answer is allowed; it does not lower this rating.
+In explain mode, giving the correction is expected and does not lower this rating.
 
-| Rating | Feedback |
-| --- | --- |
-| yes | Explanation: "With *she*, use *doesn't*." Hint: "Which form of *do* goes with *she*?" |
-| partly | "There is a problem with the verb." (No direction about what to change.) |
-| no | "Use *didn't* after *she*." (Leads to a wrong correction.) |
+| Mode | Rating | Feedback |
+| --- | --- | --- |
+| explain | yes | "After *she*, use *does*, not *do*: *she doesn't like*." |
+| hint | yes | "Which form of *do* goes with *she*?" |
+| hint | partly | "Use *doesn't* here." (Gives the answer away.) |
+| explain | partly | "There is a problem with the verb." (No direction about what to change.) |
+| explain | no | "Use *didn't* after *she*." (Leads to a wrong form.) |
 
 ### 4. Fits the level (`fits_level`)
 
 *Is the feedback written so that a learner at this level can understand it?*
 
-- **yes**: Words and sentences suit the level. Grammar terms are ones learners meet at
-  this level, or are explained. One or two short sentences.
+- **yes**: Words and sentences suit the level, and grammar terms are ones learners meet
+  at this level or are explained. Explanations take one or two short sentences, hints
+  one.
 - **partly**: Mostly suitable, but one term or structure is above the level, or the
-  feedback is much longer than needed, or it is so simplified that a B2 learner would
-  find it unhelpful.
+  feedback is much longer than needed, or it is so simplified that a C1 or C2 learner
+  would find it unhelpful.
 - **no**: Clearly too hard for the level (dense terminology, long complex sentences), or
   unsuited in another clear way.
 
-Rough guide to terms by level: A2: *verb, noun, past, plural, question*; B1: *present
-perfect, countable, comparative, preposition*; B2: *relative clause, passive, modal
-verb, conditional*.
+Guide by level, as given to the systems: A1 and A2, short sentences, everyday words
+and very few grammar terms; B1 and B2, common grammar terms (*present perfect*,
+*countable noun*, *preposition*); C1 and C2, precise grammar terms are fine.
 
-| Rating | Feedback |
-| --- | --- |
-| yes | "With *she*, use *doesn't*. *She doesn't like*, *he doesn't know*." |
-| partly | "*She* is third person singular, so use *doesn't*." (One term above A2, otherwise clear.) |
-| no | "The auxiliary must agree in person and number with the subject in the present simple, so the third-person singular inflected form is required." |
+| Mode | Rating | Feedback |
+| --- | --- | --- |
+| explain | yes | "After *she*, use *does*, not *do*: *she doesn't like*." |
+| explain | partly | "*She* is third person singular, so use *doesn't*." (One term above A2, otherwise clear.) |
+| explain | no | "The auxiliary must agree in person and number with the subject in the present simple, so the third-person singular form is required." |
 
 ### Flag: invented rule (`invented_rule`)
 
@@ -167,8 +176,8 @@ main rule) or `partly` (if it is a side remark).
 
 1. Before rating the sheet, rate the examples above without looking at the answers, then
    compare. Discuss any disagreement with the other rater before either starts.
-2. For each item, read the sentence, the correction and the edit first, then the
-   feedback. Rate the four dimensions in order, then the flag.
+2. For each item, read the level, the mode, the sentence, the correction and the edit
+   first, then the feedback. Rate the four dimensions in order, then the flag.
 3. Leave a cell empty only if you cannot decide, and say why in `comment`. Empty cells
    are left out of the averages and the agreement statistics.
 4. The second rater rates the 50-item subset sheet independently, without discussing

@@ -24,9 +24,9 @@ ITEM = {
     "level": "A2",
     "sentence": "She don't like coffee .",
     "corrected": "She doesn't like coffee .",
+    "mode": "explain",
     "edit": "don't -> doesn't",
-    "explanation": "With she, use doesn't.",
-    "hint": "Which form of do goes with she?",
+    "feedback": "With she, use doesn't.",
 }
 VALID = {
     "rule_correct": "yes",
