@@ -1,0 +1,70 @@
+# Small grammar graph for the tests. All sentences are invented.
+- id: noun_plurals
+  name: Singular and plural nouns
+  status: reviewed
+  rules:
+    A2: Add -s to a noun for more than one thing.
+    B1: Countable nouns take -s or -es in the plural.
+    B2: Regular plural nouns add -s or -es; check the noun after numbers and quantifiers.
+  example:
+    wrong: I have two cat.
+    right: I have two cats.
+  prerequisites: []
+  terms:
+    A2: [noun, plural]
+    B1: [countable]
+    B2: [quantifier]
+
+- id: articles_a_an_the
+  name: Articles a, an and the
+  status: draft
+  rules:
+    A2: Use a or an for one new thing, and the for a thing we both know.
+    B1: Use a or an with a singular countable noun the reader does not know yet.
+    B2: Use the for something specific or already mentioned.
+  example:
+    wrong: I bought book.
+    right: I bought a book.
+  prerequisites: [noun_plurals]
+  terms:
+    A2: [Article]
+    B1: [singular]
+    B2: [determiner]
+
+- id: zero_article
+  name: No article for general meaning
+  status: draft
+  rules: {A2: "", B1: "", B2: ""}
+  example: {wrong: "", right: ""}
+  prerequisites: [articles_a_an_the]
+  terms: {A2: [], B1: [], B2: []}
+
+- id: subject_verb_agreement
+  name: Subject-verb agreement
+  status: draft
+  rules:
+    A2: With he, she or it, add -s to the verb.
+    B1: A singular subject takes a verb with -s in the present simple.
+    B2: The verb agrees with its subject in number.
+  example:
+    wrong: He like tea.
+    right: He likes tea.
+  prerequisites: [noun_plurals]
+  terms:
+    A2: [verb]
+    B1: [subject]
+    B2: [agreement]
+
+- id: other_error
+  name: Other changes
+  status: draft
+  rules:
+    A2: This word needs to change.
+    B1: This part of the sentence needs to change.
+    B2: This part of the sentence needs rewording.
+  example:
+    wrong: I very like it.
+    right: I like it very much.
+  prerequisites: []
+  terms:
+    A2: [word]

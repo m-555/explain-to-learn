@@ -1,0 +1,89 @@
+# Systems compared in the evaluation (see README, "Systems compared").
+#
+# A and B use the base student model, C and D the same model with the LoRA adapter.
+# B and D get the grammar graph snippet in the prompt; A and C do not. R is the
+# larger teacher model with the graph: it is the reference point and also writes
+# the silver training explanations.
+#
+# Student model: Qwen3-4B-Instruct-2507
+#   - Apache 2.0, 4B parameters, a non-thinking instruction model, so replies are
+#     plain JSON without reasoning blocks; good instruction following and JSON
+#     output for its size; well supported by transformers, PEFT, TRL and vLLM.
+#   - In bf16 it needs about 8 GB for inference, and LoRA training fits easily in
+#     the 32 GB of an RTX 5090.
+#   - Alternative with the same licence: HuggingFaceTB/SmolLM3-3B (fully open
+#     training data and recipe). It is a hybrid reasoning model, so "/no_think" must
+#     be added to the system prompt; to switch, change `model` in A to D.
+#   - Phi-4-mini-instruct (MIT) is another permissive option. Gemma 3 4B is not
+#     used because its licence has extra use terms.
+#
+# Teacher model: gpt-oss-20b
+#   - Apache 2.0, 21B mixture-of-experts with about 3.6B active parameters per
+#     token, released with MXFP4 weights (about 13 GB), so it fits on one 32 GB GPU
+#     with room for a long KV cache and fast batched generation.
+#   - Served with vLLM's OpenAI-compatible server, for example:
+#       vllm serve openai/gpt-oss-20b --port 8001
+#     vLLM puts the reasoning in a separate field and returns only the final answer
+#     in `content`. If vLLM's MXFP4 kernels are not available for the RTX 5090
+#     (sm_120) in the installed version, serve the GGUF build with the llama.cpp
+#     server on the same port instead (llama-server -hf ggml-org/gpt-oss-20b-GGUF
+#     --jinja --port 8001); nothing else changes.
+#   - `reasoning_effort: low` keeps the reasoning short: the task is short and
+#     grounded in the graph rule, and silver generation covers up to 10,000 edits.
+#   - Alternative: Qwen3-30B-A3B-Instruct-2507 (Apache 2.0) in a 4-bit AWQ build.
+#
+# Decoding is greedy (temperature 0) for every system, so runs are repeatable.
+# A to D use the transformers backend so that the base and tuned models run
+# through the same code; set `backend: openai` and `base_url` to use a server.
+
+defaults:
+  retries: 1
+  decoding:
+    temperature: 0.0
+    top_p: 1.0
+    max_new_tokens: 256
+    seed: 0
+
+systems:
+  A:
+    description: Base model, prompted, no graph
+    model: Qwen/Qwen3-4B-Instruct-2507
+    adapter: null
+    grounded: false
+    backend: transformers
+
+  B:
+    description: Base model, prompted, with graph snippet
+    model: Qwen/Qwen3-4B-Instruct-2507
+    adapter: null
+    grounded: true
+    backend: transformers
+
+  C:
+    description: LoRA-tuned, no graph
+    model: Qwen/Qwen3-4B-Instruct-2507
+    # Local adapter directory (git-ignored) or its Hugging Face Hub ID.
+    adapter: adapters/qwen3-4b-explain-lora
+    grounded: false
+    backend: transformers
+
+  D:
+    description: LoRA-tuned, with graph snippet
+    model: Qwen/Qwen3-4B-Instruct-2507
+    adapter: adapters/qwen3-4b-explain-lora
+    grounded: true
+    backend: transformers
+
+  R:
+    description: Teacher reference, prompted, with graph snippet
+    model: openai/gpt-oss-20b
+    adapter: null
+    grounded: true
+    backend: openai
+    base_url: http://localhost:8001/v1
+    timeout_s: 300
+    extra_body:
+      reasoning_effort: low
+    decoding:
+      # Reasoning tokens count towards the limit.
+      max_new_tokens: 2048

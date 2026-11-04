@@ -16,15 +16,17 @@ dependencies = []
 [project.optional-dependencies]
 dev = ["pytest>=8.0", "ruff>=0.6"]
 data = ["errant>=3.0", "spacy>=3.7"]
-graph = ["networkx>=3.2", "pyyaml>=6.0", "rdflib>=7.0"]
+graph = ["networkx>=3.2", "pyyaml>=6.0", "rdflib>=7.0", "matplotlib>=3.8"]
 # PyTorch is installed separately (CUDA 12.8 or newer build), see README.
 model = [
-    "transformers>=4.46",
+    "transformers>=4.56",
     "peft>=0.13",
     "trl>=0.12",
     "accelerate>=1.0",
     "datasets>=3.0",
 ]
+# Reading configs/systems.yaml; the OpenAI-compatible backend needs nothing else.
+generate = ["pyyaml>=6.0"]
 demo = ["gradio>=5.0"]
 # LoRA training on an RTX 5090. Install PyTorch 2.14.1 for CUDA 13.0 first; these
 # versions were checked together for Blackwell support (docs/gpu_setup.md).
