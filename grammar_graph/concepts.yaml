@@ -1,0 +1,462 @@
+# Grammar concepts used to ground explanations. Format: see README.md in this folder.
+#
+# Every concept is a draft until a teacher has written and checked its content.
+# Three concepts (articles_a_an_the, subject_verb_agreement, verb_form_after_to)
+# are complete examples of the format; the others list only their ID, name and
+# suggested prerequisites.
+
+# Nouns
+
+- id: noun_plurals
+  name: Singular and plural nouns
+  status: draft
+  rules: {A2: "", B1: "", B2: ""}
+  example: {wrong: "", right: ""}
+  prerequisites: []
+  terms: {A2: [], B1: [], B2: []}
+
+- id: countable_uncountable_nouns
+  name: Countable and uncountable nouns
+  status: draft
+  rules: {A2: "", B1: "", B2: ""}
+  example: {wrong: "", right: ""}
+  prerequisites: [noun_plurals]
+  terms: {A2: [], B1: [], B2: []}
+
+- id: irregular_plurals
+  name: Irregular plural nouns
+  status: draft
+  rules: {A2: "", B1: "", B2: ""}
+  example: {wrong: "", right: ""}
+  prerequisites: [noun_plurals]
+  terms: {A2: [], B1: [], B2: []}
+
+- id: possessive_s
+  name: Possessive 's and s'
+  status: draft
+  rules: {A2: "", B1: "", B2: ""}
+  example: {wrong: "", right: ""}
+  prerequisites: [noun_plurals]
+  terms: {A2: [], B1: [], B2: []}
+
+- id: noun_choice
+  name: Choosing the right noun
+  status: draft
+  rules: {A2: "", B1: "", B2: ""}
+  example: {wrong: "", right: ""}
+  prerequisites: []
+  terms: {A2: [], B1: [], B2: []}
+
+# Determiners
+
+- id: articles_a_an_the
+  name: Articles a, an and the
+  status: draft
+  rules:
+    A2: >-
+      Use a or an for one thing when you talk about it for the first time: a dog,
+      an egg. Use an before a vowel sound. Use the when the listener knows which
+      thing you mean: the dog in my garden.
+    B1: >-
+      Use a or an with a singular countable noun when the reader does not know
+      which one you mean yet. Use the when they do know: you have mentioned it
+      before, or there is only one. Do not use a or an with plural or uncountable
+      nouns.
+    B2: >-
+      A singular countable noun needs a determiner. Use a or an for something
+      new or not specific, and the for something specific, already mentioned or
+      unique. Plural and uncountable nouns take no article when the meaning is
+      general: Music helps me relax.
+  example:
+    wrong: I saw a film last night. A film was very funny.
+    right: I saw a film last night. The film was very funny.
+  prerequisites: [noun_plurals, countable_uncountable_nouns]
+  terms:
+    A2: [noun, vowel]
+    B1: [article, singular, countable, uncountable]
+    B2: [determiner, specific]
+
+- id: zero_article
+  name: No article for general meaning
+  status: draft
+  rules: {A2: "", B1: "", B2: ""}
+  example: {wrong: "", right: ""}
+  prerequisites: [articles_a_an_the]
+  terms: {A2: [], B1: [], B2: []}
+
+- id: quantifiers
+  name: Quantifiers such as some, any, much and many
+  status: draft
+  rules: {A2: "", B1: "", B2: ""}
+  example: {wrong: "", right: ""}
+  prerequisites: [countable_uncountable_nouns]
+  terms: {A2: [], B1: [], B2: []}
+
+- id: demonstratives
+  name: This, that, these and those
+  status: draft
+  rules: {A2: "", B1: "", B2: ""}
+  example: {wrong: "", right: ""}
+  prerequisites: [noun_plurals]
+  terms: {A2: [], B1: [], B2: []}
+
+- id: possessive_determiners
+  name: Possessive words such as my, your and their
+  status: draft
+  rules: {A2: "", B1: "", B2: ""}
+  example: {wrong: "", right: ""}
+  prerequisites: [personal_pronouns]
+  terms: {A2: [], B1: [], B2: []}
+
+# Pronouns
+
+- id: personal_pronouns
+  name: Subject and object pronouns
+  status: draft
+  rules: {A2: "", B1: "", B2: ""}
+  example: {wrong: "", right: ""}
+  prerequisites: []
+  terms: {A2: [], B1: [], B2: []}
+
+- id: subject_required
+  name: Every sentence needs a subject
+  status: draft
+  rules: {A2: "", B1: "", B2: ""}
+  example: {wrong: "", right: ""}
+  prerequisites: [personal_pronouns]
+  terms: {A2: [], B1: [], B2: []}
+
+- id: pronoun_agreement
+  name: Pronoun agreement with the noun it replaces
+  status: draft
+  rules: {A2: "", B1: "", B2: ""}
+  example: {wrong: "", right: ""}
+  prerequisites: [personal_pronouns, noun_plurals]
+  terms: {A2: [], B1: [], B2: []}
+
+- id: relative_pronouns
+  name: Relative pronouns who, which and that
+  status: draft
+  rules: {A2: "", B1: "", B2: ""}
+  example: {wrong: "", right: ""}
+  prerequisites: [personal_pronouns]
+  terms: {A2: [], B1: [], B2: []}
+
+# Verbs: tenses and agreement
+
+- id: present_simple
+  name: Present simple
+  status: draft
+  rules: {A2: "", B1: "", B2: ""}
+  example: {wrong: "", right: ""}
+  prerequisites: []
+  terms: {A2: [], B1: [], B2: []}
+
+- id: subject_verb_agreement
+  name: Subject-verb agreement
+  status: draft
+  rules:
+    A2: >-
+      After he, she, it or one person or thing, add -s to the verb in the present
+      simple: she likes, my dad works. After I, you, we and they, do not add -s.
+    B1: >-
+      In the present simple, a singular subject (he, she, it, one person or thing)
+      takes a verb with -s; a plural subject takes the base form. The same rule
+      gives does/do, has/have and was/were.
+    B2: >-
+      The verb must agree with its subject in number. Find the real subject, even
+      when other words come between it and the verb: The list of names is long.
+      A singular subject takes -s in the present simple and was in the past of be.
+  example:
+    wrong: My brother play football every Sunday.
+    right: My brother plays football every Sunday.
+  prerequisites: [present_simple, personal_pronouns, noun_plurals]
+  terms:
+    A2: [verb, present simple, singular, plural]
+    B1: [subject, base form]
+    B2: [agreement, auxiliary]
+
+- id: past_simple
+  name: Past simple
+  status: draft
+  rules: {A2: "", B1: "", B2: ""}
+  example: {wrong: "", right: ""}
+  prerequisites: [present_simple]
+  terms: {A2: [], B1: [], B2: []}
+
+- id: irregular_verbs
+  name: Irregular verb forms
+  status: draft
+  rules: {A2: "", B1: "", B2: ""}
+  example: {wrong: "", right: ""}
+  prerequisites: [past_simple]
+  terms: {A2: [], B1: [], B2: []}
+
+- id: present_continuous
+  name: Present continuous
+  status: draft
+  rules: {A2: "", B1: "", B2: ""}
+  example: {wrong: "", right: ""}
+  prerequisites: [present_simple, auxiliary_verbs]
+  terms: {A2: [], B1: [], B2: []}
+
+- id: present_perfect
+  name: Present perfect or past simple
+  status: draft
+  rules: {A2: "", B1: "", B2: ""}
+  example: {wrong: "", right: ""}
+  prerequisites: [past_simple, irregular_verbs, auxiliary_verbs]
+  terms: {A2: [], B1: [], B2: []}
+
+- id: future_forms
+  name: Future with will and going to
+  status: draft
+  rules: {A2: "", B1: "", B2: ""}
+  example: {wrong: "", right: ""}
+  prerequisites: [present_simple]
+  terms: {A2: [], B1: [], B2: []}
+
+- id: verb_tense_choice
+  name: Choosing the right tense
+  status: draft
+  rules: {A2: "", B1: "", B2: ""}
+  example: {wrong: "", right: ""}
+  prerequisites: [present_simple, past_simple, present_perfect, future_forms]
+  terms: {A2: [], B1: [], B2: []}
+
+- id: auxiliary_verbs
+  name: Helping verbs be, do and have
+  status: draft
+  rules: {A2: "", B1: "", B2: ""}
+  example: {wrong: "", right: ""}
+  prerequisites: [present_simple]
+  terms: {A2: [], B1: [], B2: []}
+
+- id: modal_verbs
+  name: Modal verbs such as can, must and should
+  status: draft
+  rules: {A2: "", B1: "", B2: ""}
+  example: {wrong: "", right: ""}
+  prerequisites: []
+  terms: {A2: [], B1: [], B2: []}
+
+- id: passive_voice
+  name: The passive
+  status: draft
+  rules: {A2: "", B1: "", B2: ""}
+  example: {wrong: "", right: ""}
+  prerequisites: [auxiliary_verbs, irregular_verbs]
+  terms: {A2: [], B1: [], B2: []}
+
+- id: conditionals
+  name: Conditional sentences with if
+  status: draft
+  rules: {A2: "", B1: "", B2: ""}
+  example: {wrong: "", right: ""}
+  prerequisites: [verb_tense_choice, modal_verbs]
+  terms: {A2: [], B1: [], B2: []}
+
+# Verbs: forms and patterns
+
+- id: verb_choice
+  name: Choosing the right verb
+  status: draft
+  rules: {A2: "", B1: "", B2: ""}
+  example: {wrong: "", right: ""}
+  prerequisites: []
+  terms: {A2: [], B1: [], B2: []}
+
+- id: verb_form_after_to
+  name: Base form after to
+  status: draft
+  rules:
+    A2: >-
+      After to, use the base form of the verb: to go, to eat. Do not add -ing,
+      -s or -ed to it.
+    B1: >-
+      When to comes before a verb (want to, like to, decide to), the verb after
+      it is in the base form: I want to go, not I want to going.
+    B2: >-
+      In a to-infinitive the verb is always in the base form: She hopes to win.
+      Be careful: in some phrases to is a preposition, and then the verb takes
+      -ing: I look forward to seeing you.
+  example:
+    wrong: We decided to going home early.
+    right: We decided to go home early.
+  prerequisites: [present_simple]
+  terms:
+    A2: [verb, base form]
+    B1: [infinitive]
+    B2: [to-infinitive, preposition]
+
+- id: verb_patterns
+  name: Verb followed by -ing or to + verb
+  status: draft
+  rules: {A2: "", B1: "", B2: ""}
+  example: {wrong: "", right: ""}
+  prerequisites: [verb_form_after_to]
+  terms: {A2: [], B1: [], B2: []}
+
+- id: base_form_after_modals
+  name: Base form after modal verbs
+  status: draft
+  rules: {A2: "", B1: "", B2: ""}
+  example: {wrong: "", right: ""}
+  prerequisites: [modal_verbs]
+  terms: {A2: [], B1: [], B2: []}
+
+- id: phrasal_verbs
+  name: Phrasal verbs and their particles
+  status: draft
+  rules: {A2: "", B1: "", B2: ""}
+  example: {wrong: "", right: ""}
+  prerequisites: [verb_choice]
+  terms: {A2: [], B1: [], B2: []}
+
+# Adjectives and adverbs
+
+- id: adjective_choice
+  name: Choosing the right adjective
+  status: draft
+  rules: {A2: "", B1: "", B2: ""}
+  example: {wrong: "", right: ""}
+  prerequisites: []
+  terms: {A2: [], B1: [], B2: []}
+
+- id: comparatives_superlatives
+  name: Comparative and superlative adjectives
+  status: draft
+  rules: {A2: "", B1: "", B2: ""}
+  example: {wrong: "", right: ""}
+  prerequisites: [adjective_choice]
+  terms: {A2: [], B1: [], B2: []}
+
+- id: adverb_choice
+  name: Choosing the right adverb
+  status: draft
+  rules: {A2: "", B1: "", B2: ""}
+  example: {wrong: "", right: ""}
+  prerequisites: [adjective_or_adverb]
+  terms: {A2: [], B1: [], B2: []}
+
+- id: adjective_or_adverb
+  name: Adjective or adverb
+  status: draft
+  rules: {A2: "", B1: "", B2: ""}
+  example: {wrong: "", right: ""}
+  prerequisites: [adjective_choice]
+  terms: {A2: [], B1: [], B2: []}
+
+# Prepositions
+
+- id: prepositions_time_place
+  name: Prepositions of time and place
+  status: draft
+  rules: {A2: "", B1: "", B2: ""}
+  example: {wrong: "", right: ""}
+  prerequisites: []
+  terms: {A2: [], B1: [], B2: []}
+
+- id: preposition_choice
+  name: Choosing the right preposition
+  status: draft
+  rules: {A2: "", B1: "", B2: ""}
+  example: {wrong: "", right: ""}
+  prerequisites: [prepositions_time_place]
+  terms: {A2: [], B1: [], B2: []}
+
+- id: dependent_prepositions
+  name: Words that take a fixed preposition
+  status: draft
+  rules: {A2: "", B1: "", B2: ""}
+  example: {wrong: "", right: ""}
+  prerequisites: [preposition_choice]
+  terms: {A2: [], B1: [], B2: []}
+
+# Linking and word formation
+
+- id: conjunctions
+  name: Linking words such as and, but, because and so
+  status: draft
+  rules: {A2: "", B1: "", B2: ""}
+  example: {wrong: "", right: ""}
+  prerequisites: []
+  terms: {A2: [], B1: [], B2: []}
+
+- id: contractions
+  name: Short forms such as don't and it's
+  status: draft
+  rules: {A2: "", B1: "", B2: ""}
+  example: {wrong: "", right: ""}
+  prerequisites: [auxiliary_verbs]
+  terms: {A2: [], B1: [], B2: []}
+
+- id: word_formation
+  name: Word families and word endings
+  status: draft
+  rules: {A2: "", B1: "", B2: ""}
+  example: {wrong: "", right: ""}
+  prerequisites: [adjective_or_adverb]
+  terms: {A2: [], B1: [], B2: []}
+
+# Sentence structure
+
+- id: word_order
+  name: Word order in sentences
+  status: draft
+  rules: {A2: "", B1: "", B2: ""}
+  example: {wrong: "", right: ""}
+  prerequisites: [subject_required]
+  terms: {A2: [], B1: [], B2: []}
+
+- id: question_word_order
+  name: Word order in questions
+  status: draft
+  rules: {A2: "", B1: "", B2: ""}
+  example: {wrong: "", right: ""}
+  prerequisites: [word_order, auxiliary_verbs]
+  terms: {A2: [], B1: [], B2: []}
+
+# Spelling and punctuation
+
+- id: spelling
+  name: Spelling
+  status: draft
+  rules: {A2: "", B1: "", B2: ""}
+  example: {wrong: "", right: ""}
+  prerequisites: []
+  terms: {A2: [], B1: [], B2: []}
+
+- id: capitals_and_spacing
+  name: Capital letters and spaces between words
+  status: draft
+  rules: {A2: "", B1: "", B2: ""}
+  example: {wrong: "", right: ""}
+  prerequisites: []
+  terms: {A2: [], B1: [], B2: []}
+
+- id: sentence_punctuation
+  name: Full stops, question marks and apostrophes
+  status: draft
+  rules: {A2: "", B1: "", B2: ""}
+  example: {wrong: "", right: ""}
+  prerequisites: []
+  terms: {A2: [], B1: [], B2: []}
+
+- id: commas
+  name: Commas
+  status: draft
+  rules: {A2: "", B1: "", B2: ""}
+  example: {wrong: "", right: ""}
+  prerequisites: [sentence_punctuation, conjunctions]
+  terms: {A2: [], B1: [], B2: []}
+
+# Fallback
+
+- id: other_error
+  name: Other changes to wording
+  status: draft
+  rules: {A2: "", B1: "", B2: ""}
+  example: {wrong: "", right: ""}
+  prerequisites: []
+  terms: {A2: [], B1: [], B2: []}
