@@ -1,5 +1,6 @@
 """Tests for the grammar graph: loading, validation and queries."""
 
+import importlib.util
 from pathlib import Path
 
 import pytest
@@ -291,3 +292,46 @@ def test_repository_graph_validates_and_maps_every_type():
         assert graph.concept_for(category) is not None, category
         for operation in OPERATIONS:
             assert graph.concept_for(f"{operation}:{category}") is not None
+
+
+# Scripts
+
+
+def load_script(name: str):
+    """Import a file from scripts/ as a module."""
+    path = Path(__file__).parents[1] / "scripts" / f"{name}.py"
+    spec = importlib.util.spec_from_file_location(name, path)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+def test_draw_graph(tmp_path):
+    pytest.importorskip("matplotlib")
+    draw_graph = load_script("draw_graph")
+    out = draw_graph.draw(load_fixture(), tmp_path / "figures" / "graph.png")
+    assert out.read_bytes()[:8] == b"\x89PNG\r\n\x1a\n"
+
+
+def test_draw_graph_refuses_a_cycle(tmp_path):
+    pytest.importorskip("matplotlib")
+    concepts, mapping = fixture_data()
+    by_id(concepts, "noun_plurals")["prerequisites"] = ["zero_article"]
+    graph = write_graph(tmp_path, concepts, mapping)
+    with pytest.raises(ValueError, match="cycle"):
+        load_script("draw_graph").draw(graph, tmp_path / "graph.png")
+
+
+def test_export_rdf():
+    pytest.importorskip("rdflib")
+    from rdflib import Literal
+    from rdflib.namespace import RDF, SKOS
+
+    export_rdf = load_script("export_rdf")
+    rdf = export_rdf.to_rdf(load_fixture())
+    etl = export_rdf.ETL
+    assert len(list(rdf.subjects(RDF.type, SKOS.Concept))) == 5
+    assert (etl.zero_article, etl.hasPrerequisite, etl.articles_a_an_the) in rdf
+    assert (etl.zero_article, SKOS.notation, Literal("U:DET")) in rdf
+    label = rdf.value(etl.noun_plurals, SKOS.prefLabel)
+    assert str(label) == "Singular and plural nouns"
