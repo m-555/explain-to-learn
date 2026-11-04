@@ -532,6 +532,17 @@ def markdown_report(results: dict) -> str:
                     f"| {name} | {metric} | {c['n']} | {_cell(c['diff'])} | {interval} | "
                     f"{c['p_value']:.3f} |"
                 )
+    if results.get("correction"):
+        c = results["correction"]
+        lines += [
+            "",
+            "## Correction (ERRANT, span-based)",
+            "",
+            "| TP | FP | FN | Precision | Recall | F0.5 |",
+            "| ---: | ---: | ---: | ---: | ---: | ---: |",
+            f"| {c['tp']} | {c['fp']} | {c['fn']} | {c['precision']:.4f} | "
+            f"{c['recall']:.4f} | {c['f0.5']:.4f} |",
+        ]
     return "\n".join(lines).rstrip() + "\n"
 
 
