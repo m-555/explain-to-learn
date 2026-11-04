@@ -1,0 +1,101 @@
+# Grammar terms detected in explanations for the level-fit metric.
+#
+# One term per line, lower case; plurals are matched automatically. Longer terms are
+# matched first, so "past participle" counts once, not also as "participle". The
+# grammar graph lists which of these terms suit each CEFR level; a term used in an
+# explanation but not listed for the learner's level counts as off-level.
+
+# Word classes
+noun
+countable noun
+uncountable noun
+plural
+singular
+pronoun
+relative pronoun
+possessive
+possessive adjective
+adjective
+comparative
+superlative
+adverb
+adverb of frequency
+determiner
+article
+definite article
+indefinite article
+quantifier
+preposition
+conjunction
+coordinating conjunction
+subordinating conjunction
+verb
+auxiliary
+auxiliary verb
+modal
+modal verb
+phrasal verb
+main verb
+linking verb
+transitive verb
+intransitive verb
+
+# Verb forms
+infinitive
+bare infinitive
+to-infinitive
+gerund
+participle
+past participle
+present participle
+base form
+-ing form
+third person
+third person singular
+tense
+present simple
+present continuous
+present perfect
+present perfect continuous
+past simple
+past continuous
+past perfect
+future simple
+conditional
+passive
+passive voice
+active voice
+imperative
+subjunctive
+aspect
+progressive
+
+# Sentence structure
+subject
+object
+direct object
+indirect object
+complement
+clause
+main clause
+subordinate clause
+relative clause
+defining relative clause
+non-defining relative clause
+phrase
+noun phrase
+verb phrase
+word order
+inversion
+agreement
+subject-verb agreement
+collocation
+reported speech
+question tag
+
+# Spelling and punctuation
+contraction
+capital letter
+punctuation
+apostrophe
+comma
