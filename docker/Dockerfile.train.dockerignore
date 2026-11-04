@@ -1,0 +1,12 @@
+# Build context for docker/Dockerfile.train: leave out data, model files and outputs.
+.git/
+.venv/
+venv/
+data/
+outputs/
+checkpoints/
+adapters/
+wandb/
+mlruns/
+report/
+**/__pycache__/

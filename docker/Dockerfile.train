@@ -1,0 +1,36 @@
+# Training image for LoRA fine-tuning on an RTX 5090 (Blackwell, sm_120).
+#
+# PyTorch 2.14.1 built for CUDA 13.0 includes sm_120 kernels. The host needs an NVIDIA
+# driver of the R580 branch or newer. See docs/gpu_setup.md.
+#
+# Build (from the repository root):
+#   docker build -f docker/Dockerfile.train -t explain-to-learn-train .
+# Run with the repository mounted, so that data, outputs and code stay on the host:
+#   docker run --rm -it --gpus all --ipc=host -v "$PWD":/workspace/explain-to-learn \
+#     explain-to-learn-train python train/train_lora.py --variant r16 --system d
+FROM pytorch/pytorch:2.14.1-cuda13.0-cudnn9-devel
+
+ENV PIP_NO_CACHE_DIR=1 \
+    PYTHONUNBUFFERED=1 \
+    HF_HOME=/root/.cache/huggingface
+
+# Triton builds its kernels with a C compiler on first use.
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends build-essential git \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /workspace/explain-to-learn
+
+# Install the dependencies before copying the code, so code changes reuse this layer.
+COPY pyproject.toml README.md LICENSE ./
+COPY src/explain_to_learn/__init__.py src/explain_to_learn/__init__.py
+RUN pip install -e ".[train,dev]" \
+    && python -c "import torch; assert torch.__version__.startswith('2.14.1'), torch.__version__"
+
+# Code only: data and outputs are mounted at run time and never copied into the image.
+COPY src/ src/
+COPY train/ train/
+COPY scripts/ scripts/
+COPY tests/ tests/
+
+CMD ["bash"]
