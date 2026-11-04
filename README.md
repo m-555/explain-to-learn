@@ -95,11 +95,14 @@ Raw learner text is not stored in this repository. The repo will hold scripts an
 
 ## Credits
 
-- W&I+LOCNESS and FCE: Bryant et al. (2019), *The BEA-2019 Shared Task on Grammatical Error Correction*; Yannakoudakis et al. (2011), *A New Dataset and Method for Automatically Grading ESOL Texts*.
+- Cambridge English Write & Improve (W&I): Yannakoudakis, Andersen, Geranpayeh, Briscoe and Nicholls (2018), *Developing an automated writing placement system for ESL learners*, Applied Measurement in Education.
+- LOCNESS: Centre for English Corpus Linguistics (CECL), Université catholique de Louvain, Belgium.
+- FCE: Yannakoudakis, Briscoe and Medlock (2011), *A New Dataset and Method for Automatically Grading ESOL Texts*, ACL-HLT.
+- BEA-2019 versions of W&I+LOCNESS and FCE: Bryant, Felice, Andersen and Briscoe (2019), *The BEA-2019 Shared Task on Grammatical Error Correction*.
 - ERRANT: Bryant et al. (2017), *Automatic Annotation and Evaluation of Error Types for Grammatical Error Correction*.
 - GEE: Song et al. (2024), *GEE! Grammar Error Explanation with Large Language Models*, Findings of NAACL.
 - BEA 2025 shared task on the pedagogical ability of AI tutors.
 
 ## Licence
 
-The code is released under the [MIT License](LICENSE). The datasets keep their own licences.
+The code is released under the [MIT License](LICENSE). The datasets keep their own licences: W&I+LOCNESS and FCE may be used for non-commercial research and education only, and must be downloaded from the [BEA-2019 shared-task page](https://www.cl.cam.ac.uk/research/nl/bea2019st/).
