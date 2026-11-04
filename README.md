@@ -48,6 +48,37 @@ A larger open-weight model with the graph is run as a reference point.
 
 Not available yet.
 
+## Quick start
+
+Requires Python 3.11 or newer. The data pipeline needs only the standard library.
+
+```bash
+python -m venv .venv && source .venv/bin/activate
+pip install -e ".[dev]"
+```
+
+Download the corpora into `data/raw/` (git-ignored). The script prints the licence terms and only downloads with the flag:
+
+```bash
+bash scripts/download_data.sh --accept-licence
+```
+
+Build the edit table, the essay split files, the gold edit IDs and the data statistics:
+
+```bash
+python -m explain_to_learn.edits build --raw data/raw --out data/processed/edits.jsonl
+python -m explain_to_learn.splits --edits data/processed/edits.jsonl --out data/splits
+python scripts/data_stats.py --edits data/processed/edits.jsonl --out eval/results/data_stats.md
+```
+
+The edit table rebuilds with the same edit IDs as `data/splits/gold_edit_ids.txt`. Run the linter and tests:
+
+```bash
+ruff check . && pytest
+```
+
+Other extras: `graph`, `data` (ERRANT and spaCy), `model` and `demo`. For `model`, first install a PyTorch build for CUDA 12.8 or newer (needed for Blackwell GPUs), for example `pip install torch --index-url https://download.pytorch.org/whl/cu128`.
+
 ## Data
 
 | Dataset | Role |
