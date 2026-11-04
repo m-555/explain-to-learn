@@ -39,9 +39,9 @@ DEFAULT_COMPARISONS = ("B:A", "C:A", "D:B", "D:C")
 
 def open_graph(directory: Path):
     """Load the grammar graph from its YAML files (see `explain_to_learn.graph`)."""
-    from explain_to_learn.graph import GrammarGraph
+    from explain_to_learn.graph import load_graph
 
-    return GrammarGraph.load(directory)
+    return load_graph(directory / "concepts.yaml", directory / "errant_map.yaml")
 
 
 def read_outputs(path: Path) -> dict[str, dict]:

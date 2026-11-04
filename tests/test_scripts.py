@@ -167,3 +167,15 @@ def test_make_silver_generate_filter_and_score(workspace, monkeypatch):
     make_silver.main([*base, "score"])
     score = json.loads(Path("results/silver_handcheck.json").read_text())
     assert (score["rated"], score["correct"]) == (6, 5)
+
+
+@pytest.mark.parametrize("name", ["run_system", "make_silver", "compute_metrics"])
+def test_scripts_load_the_real_grammar_graph(name):
+    pytest.importorskip("yaml")
+    pytest.importorskip("networkx")
+    graph = load_script(name).open_graph(ROOT / "grammar_graph")
+    concept_id = graph.concept_for("R:VERB:SVA")
+    assert concept_id
+    for level in ("A1", "A2", "B1", "B2", "C1", "C2", "native"):
+        assert graph.snippet(concept_id, level)["concept_id"] == concept_id
+        assert isinstance(graph.level_terms(level), set)
