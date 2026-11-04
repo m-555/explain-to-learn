@@ -85,7 +85,7 @@ cd ~/explain-to-learn
 python3.12 -m venv .venv && source .venv/bin/activate
 pip install --upgrade pip
 pip install torch==2.14.1 --index-url https://download.pytorch.org/whl/cu130
-pip install -e ".[train,dev]"
+pip install -e ".[train,graph,generate,dev]"
 ```
 
 `build-essential` provides the C compiler that Triton uses to build its GPU kernels on
@@ -116,12 +116,15 @@ python -c "import torch; x = torch.randn(4096, 4096, device='cuda', dtype=torch.
 Build the SFT data, then train for 20 steps to check memory and speed before a full run:
 
 ```bash
-python -m explain_to_learn.train_data --silver data/processed/silver_kept.jsonl --out data/processed/sft
+python -m explain_to_learn.train_data --silver outputs/silver/kept.jsonl --out outputs/sft
 python train/train_lora.py --variant r16 --system d --max-steps 20
 ```
 
 The script prints the peak GPU memory and the run time. See `train/lora_config.yaml` for
-the settings and variants.
+the settings and variants. A full run saves the adapter to `outputs/adapters/d-r16/`.
+Systems C and D in `configs/systems.yaml` load their adapters from the `adapter` path
+(a local directory or a Hugging Face Hub ID), so point C at the system C adapter and D
+at the system D adapter before running them.
 
 ## 3. Docker alternative
 

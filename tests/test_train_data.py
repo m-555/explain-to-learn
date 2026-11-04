@@ -1,54 +1,37 @@
-"""SFT example building with fake prompt builders and a fake grammar graph."""
+"""SFT example building from synthetic silver rows, with a fake grammar graph.
 
-import dataclasses
+The prompts come from the real `prompts` and `generate` modules, so the tests check
+that training inputs are exactly the inputs the systems get at inference time.
+"""
+
 import json
-import sys
 
 import pytest
 
-from explain_to_learn import graph, prompts, train_data
-from explain_to_learn.edits import Edit
-from explain_to_learn.train_data import (
-    assign_modes,
-    build_examples,
-    edit_from_row,
-    read_jsonl,
-    target_level,
-    validation_essays,
-)
-
-
-def fake_build_messages(edit, level, mode, snippet):
-    """Chat messages that show every input, so tests can see what was passed."""
-    user = f"{edit.original} | {edit.original_text} -> {edit.corrected_text} | {level} | {mode}"
-    if snippet is not None:
-        user += f" | {snippet}"
-    return [{"role": "system", "content": "Explain the edit."}, {"role": "user", "content": user}]
-
-
-def fake_build_target(concept, explanation, hint):
-    return json.dumps({"concept": concept, "explanation": explanation, "hint": hint})
+from explain_to_learn import train_data
+from explain_to_learn.edits import Edit, write_jsonl
+from explain_to_learn.prompts import build_messages, build_target, format_snippet
+from explain_to_learn.train_data import build_examples, read_rows, validation_essays
 
 
 class FakeGraph:
-    """Maps one error type to a concept; every other type is unmapped."""
+    """Maps R:VERB:SVA to a concept; every other error type has none."""
 
     def concept_for(self, error_type):
-        return {"R:VERB:SVA": "subject_verb_agreement"}.get(error_type)
+        return "subject_verb_agreement" if error_type == "R:VERB:SVA" else None
 
     def snippet(self, concept_id, level):
-        return f"[{concept_id} rule for {level}]"
+        return {
+            "concept_id": concept_id,
+            "name": "Subject-verb agreement",
+            "rule": f"Rule worded for {level}.",
+            "example": {"wrong": "He go.", "right": "He goes."},
+            "prerequisites": [],
+        }
 
 
-@pytest.fixture(autouse=True)
-def fake_prompts(monkeypatch):
-    monkeypatch.setattr(prompts, "build_messages", fake_build_messages, raising=False)
-    monkeypatch.setattr(prompts, "build_target", fake_build_target, raising=False)
-
-
-def silver_row(essay: str, idx: int, error_type: str = "R:VERB:SVA", level: str = "B1") -> dict:
-    """A synthetic silver row: an edit plus a teacher explanation."""
-    edit = Edit(
+def make_edit(essay: str, idx: int, error_type: str, level: str) -> Edit:
+    return Edit(
         edit_id=f"wi-{essay}-0-{idx}",
         corpus="wi",
         essay_id=essay,
@@ -62,92 +45,78 @@ def silver_row(essay: str, idx: int, error_type: str = "R:VERB:SVA", level: str 
         original_text="go",
         corrected_text="goes",
         error_type=error_type,
-        operation=error_type.split(":", 1)[0],
+        operation="R",
         error_category=error_type.split(":", 1)[1],
     )
-    return dataclasses.asdict(edit) | {
-        "concept": "subject_verb_agreement",
-        "explanation": "With he, the verb takes -s.",
-        "hint": "Look at the verb after he.",
+
+
+def silver_row(edit: Edit, mode: str) -> dict:
+    """A kept silver row as written by `silver.filter_silver`."""
+    explanation = 'Use "goes", not "go", after "he".' if mode == "explain" else ""
+    hint = 'Look at the verb after "he".' if mode == "hint" else ""
+    return {
+        "edit_id": edit.edit_id,
+        "level": edit.cefr_level,
+        "mode": mode,
+        "concept_id": "subject_verb_agreement",
+        "concept": "Subject-verb agreement",
+        "explanation": explanation,
+        "hint": hint,
+        "target": build_target("Subject-verb agreement", explanation, hint),
     }
 
 
-def silver_rows() -> list[dict]:
-    """Twenty essays with three edits each; one edit per essay has an unmapped type."""
-    return [
-        silver_row(f"E{essay}", idx, "R:VERB:SVA" if idx < 2 else "R:PREP", level)
-        for essay, level in zip(range(20), ["A1", "B1", "C2", "B2"] * 5, strict=True)
+def silver_data(n_essays: int = 20) -> tuple[list[dict], dict[str, Edit]]:
+    """Three edits per essay; the third has an error type without a concept."""
+    edits = [
+        make_edit(f"E{essay}", idx, "R:VERB:SVA" if idx < 2 else "R:PREP", level)
+        for essay, level in zip(range(n_essays), ["A1", "B1", "C2", "B2"] * 5, strict=False)
         for idx in range(3)
     ]
-
-
-def test_target_level_maps_to_graph_levels():
-    levels = ["A1", "A2", "B1", "B2", "C1", "C2", "native"]
-
-    assert [target_level(level) for level in levels] == ["A2", "A2", "B1", "B2", "B2", "B2", "B2"]
+    rows = [silver_row(edit, "hint" if i % 4 == 0 else "explain") for i, edit in enumerate(edits)]
+    return rows, {edit.edit_id: edit for edit in edits}
 
 
 def test_c_and_d_differ_only_in_grounding():
-    rows = silver_rows()
-    system_c = build_examples(rows, "c")
-    system_d = build_examples(rows, "d", FakeGraph())
+    rows, edits = silver_data()
+    system_c = build_examples(rows, edits, "c", FakeGraph())
+    system_d = build_examples(rows, edits, "d", FakeGraph())
 
-    rows_by_id = {row["edit_id"]: row for row in rows}
     for split in ("train", "validation"):
         assert [e["edit_id"] for e in system_c[split]] == [e["edit_id"] for e in system_d[split]]
         for c, d in zip(system_c[split], system_d[split], strict=True):
+            edit = edits[c["edit_id"]]
             assert (c["mode"], c["level"], c["completion"]) == (
                 d["mode"],
                 d["level"],
                 d["completion"],
             )
-            edit = edit_from_row(rows_by_id[c["edit_id"]])
-            snippet = None
+            assert c["prompt"] == build_messages(edit, c["level"], c["mode"], None)
+            assert c["prompt"][0] == d["prompt"][0]
             if edit.error_type == "R:VERB:SVA":
-                snippet = f"[subject_verb_agreement rule for {c['level']}]"
-            assert c["prompt"] == fake_build_messages(edit, c["level"], c["mode"], None)
-            assert d["prompt"] == fake_build_messages(edit, d["level"], d["mode"], snippet)
-            assert not c["grounded"] and d["grounded"] == (snippet is not None)
-    assert any(e["grounded"] for e in system_d["train"])
-    assert not all(e["grounded"] for e in system_d["train"])
+                snippet = format_snippet(FakeGraph().snippet("subject_verb_agreement", c["level"]))
+                assert d["prompt"][1]["content"] == c["prompt"][1]["content"] + "\n" + snippet
+                assert d["grounded"] and not c["grounded"]
+            else:
+                assert d["prompt"] == c["prompt"] and not d["grounded"]
 
 
-def test_completion_is_the_target_json():
-    example = build_examples([silver_row("E1", 0)], "c")["validation"][0]
+def test_mode_level_and_target_come_from_the_silver_row():
+    rows, edits = silver_data(4)
+    examples = build_examples(rows, edits, "d", FakeGraph(), share=0.25)
+    by_id = {e["edit_id"]: e for split in examples.values() for e in split}
 
-    assert example["completion"] == [
-        {
-            "role": "assistant",
-            "content": fake_build_target(
-                "subject_verb_agreement",
-                "With he, the verb takes -s.",
-                "Look at the verb after he.",
-            ),
-        }
-    ]
-
-
-def test_modes_are_mixed_and_reproducible():
-    ids = [f"wi-E{i}-0-0" for i in range(41)]
-    modes = assign_modes(ids, seed=1)
-
-    assert sorted(set(modes.values())) == ["explain", "hint"]
-    assert abs(list(modes.values()).count("explain") - list(modes.values()).count("hint")) <= 1
-    assert assign_modes(reversed(ids), seed=1) == modes
-    assert assign_modes(ids, seed=2) != modes
-
-
-def test_levels_follow_the_essay_or_the_row():
-    rows = [silver_row("E1", 0, level="C1"), silver_row("E2", 0, level="C1") | {"level": "A2"}]
-    examples = build_examples(rows, "c", share=0.5)
-    levels = {e["edit_id"]: e["level"] for split in examples.values() for e in split}
-
-    assert levels == {"wi-E1-0-0": "B2", "wi-E2-0-0": "A2"}
+    for row in rows:
+        example = by_id[row["edit_id"]]
+        assert example["mode"] == row["mode"]
+        assert example["completion"] == [{"role": "assistant", "content": row["target"]}]
+    assert {e["level"] for e in by_id.values()} == {"A1", "B1", "C2", "B2"}
+    assert {e["mode"] for e in by_id.values()} == {"explain", "hint"}
 
 
 def test_split_is_by_essay_and_reproducible():
-    rows = silver_rows()
-    examples = build_examples(rows, "c", share=0.25, seed=3)
+    rows, edits = silver_data()
+    examples = build_examples(rows, edits, "c", FakeGraph(), share=0.25, seed=3)
     train_essays = {e["essay_key"] for e in examples["train"]}
     validation = {e["essay_key"] for e in examples["validation"]}
 
@@ -155,25 +124,31 @@ def test_split_is_by_essay_and_reproducible():
     assert len(validation) == 5
     assert len(examples["train"]) + len(examples["validation"]) == len(rows)
     assert validation == validation_essays(train_essays | validation, 0.25, 3)
-    assert build_examples(list(reversed(rows)), "c", share=0.25, seed=3) == examples
+    assert build_examples(list(reversed(rows)), edits, "c", FakeGraph(), 0.25, 3) == examples
+    assert build_examples(rows, edits, "c", FakeGraph(), 0.25, 4) != examples
 
 
-def test_system_d_needs_the_graph():
-    with pytest.raises(ValueError, match="graph"):
-        build_examples([silver_row("E1", 0)], "d")
+def test_unknown_edits_and_systems_are_errors():
+    rows, edits = silver_data(2)
+
+    with pytest.raises(ValueError, match="not in the edit table"):
+        build_examples(rows, {}, "c", FakeGraph())
+    with pytest.raises(ValueError, match="Unknown system"):
+        build_examples(rows, edits, "a", FakeGraph())
 
 
 def test_main_writes_both_systems(tmp_path, monkeypatch):
-    silver = tmp_path / "silver.jsonl"
-    train_data.write_jsonl(silver_rows(), silver)
-    out = tmp_path / "sft"
-    monkeypatch.setattr(graph, "load_graph", FakeGraph, raising=False)
-    monkeypatch.setattr(sys, "argv", ["train_data", "--silver", str(silver), "--out", str(out)])
+    graph = pytest.importorskip("explain_to_learn.graph")
+    rows, edits = silver_data()
+    silver, edits_path, out = tmp_path / "kept.jsonl", tmp_path / "edits.jsonl", tmp_path / "sft"
+    silver.write_text("".join(json.dumps(row) + "\n" for row in rows), encoding="utf-8")
+    write_jsonl(edits.values(), edits_path)
+    monkeypatch.setattr(graph, "load_graph", lambda *paths: FakeGraph())
 
-    train_data.main()
+    train_data.main(["--silver", str(silver), "--edits", str(edits_path), "--out", str(out)])
 
     for system in ("c", "d"):
-        train = read_jsonl(out / f"system_{system}" / "train.jsonl")
-        validation = read_jsonl(out / f"system_{system}" / "validation.jsonl")
+        train = read_rows(out / f"system_{system}" / "train.jsonl")
+        validation = read_rows(out / f"system_{system}" / "validation.jsonl")
         assert len(train) + len(validation) == 60
         assert {e["system"] for e in train} == {system}

@@ -250,7 +250,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--system", choices=SYSTEMS, required=True)
     parser.add_argument("--variant", default="r16", help="a key under `variants` in the config")
     parser.add_argument("--config", type=Path, default=CONFIG_PATH)
-    parser.add_argument("--data-dir", type=Path, default=Path("data/processed/sft"))
+    parser.add_argument("--data-dir", type=Path, default=Path("outputs/sft"))
     parser.add_argument("--output-dir", type=Path, default=Path("outputs/adapters"))
     parser.add_argument("--checkpoint-dir", type=Path, default=Path("outputs/checkpoints"))
     parser.add_argument("--run-name", help="default: <system>-<variant>, e.g. d-r16")
