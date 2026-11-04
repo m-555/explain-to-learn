@@ -3,10 +3,12 @@ from pathlib import Path
 
 import pytest
 
+from explain_to_learn.edits import Edit
 from explain_to_learn.generate import (
     Decoding,
     OpenAIBackend,
     done_ids,
+    edit_item,
     generate,
     load_systems,
     make_backend,
@@ -40,7 +42,7 @@ class ScriptedBackend:
         GOOD_TEXT,
         f"```json\n{GOOD_TEXT}\n```",
         f"Sure! Here is the JSON:\n{GOOD_TEXT}\nHope this helps.",
-        f"<think>The learner wrote {{cat}}. {{\"concept\": 1}}</think>\n{GOOD_TEXT}",
+        f'<think>The learner wrote {{cat}}. {{"concept": 1}}</think>\n{GOOD_TEXT}',
         f"I should check the rule {{not json}}.</think>{GOOD_TEXT}",
         f"<|channel|>analysis<|message|>Think.<|end|><|start|>assistant"
         f"<|channel|>final<|message|>{GOOD_TEXT}<|return|>",
@@ -161,3 +163,59 @@ def test_systems_config_defines_all_systems():
         assert system["backend"] in {"openai", "transformers"}
         assert system["decoding"]["temperature"] == 0.0
         Decoding(**system["decoding"])
+
+
+class FakeGraph:
+    """The GrammarGraph contract with one concept."""
+
+    def concept_for(self, error_type):
+        return "subject_verb_agreement" if error_type == "R:VERB:SVA" else None
+
+    def snippet(self, concept_id, level):
+        return {
+            "concept_id": concept_id,
+            "name": "Subject-verb agreement",
+            "rule": f"Rule for {level}.",
+            "example": {"wrong": "She like tea.", "right": "She likes tea."},
+            "prerequisites": [],
+        }
+
+
+def make_edit(error_type, level="native"):
+    operation, category = error_type.split(":", 1)
+    return Edit(
+        edit_id="wi-1-0-0",
+        corpus="wi",
+        essay_id="1",
+        split="dev",
+        cefr_level=level,
+        sent_idx=0,
+        original="She do n't like tea .",
+        corrected="She does n't like tea .",
+        start=1,
+        end=2,
+        original_text="do",
+        corrected_text="does",
+        error_type=error_type,
+        operation=operation,
+        error_category=category,
+    )
+
+
+def test_edit_item_grounded_and_ungrounded():
+    edit = make_edit("R:VERB:SVA")
+    record, messages = edit_item(edit, "explain", FakeGraph(), grounded=True, system="B")
+    plain_record, plain = edit_item(edit, "explain", FakeGraph(), grounded=False)
+
+    assert record["system"] == "B" and record["level"] == "C2"
+    assert record["grounded"] and not plain_record["grounded"]
+    assert record["concept_name"] == plain_record["concept_name"] == "Subject-verb agreement"
+    assert "Rule for C2." in messages[1]["content"]
+    assert "Grammar rule" not in plain[1]["content"]
+
+
+def test_edit_item_without_concept_or_graph():
+    record, messages = edit_item(make_edit("R:OTHER"), "hint", FakeGraph(), grounded=True)
+    assert record["concept_id"] is None and not record["grounded"]
+    assert "Grammar rule" not in messages[1]["content"]
+    assert edit_item(make_edit("R:VERB:SVA"), "hint")[0]["concept_id"] is None

@@ -27,6 +27,9 @@ from dataclasses import asdict, dataclass, field
 from pathlib import Path
 from typing import Any, Protocol
 
+from explain_to_learn.edits import Edit
+from explain_to_learn.prompts import build_messages, prompt_level
+
 OUTPUT_FIELDS = ("concept", "explanation", "hint")
 RETRY_MESSAGE = (
     "Your reply was not a valid JSON object with the keys concept, explanation and "
@@ -269,6 +272,31 @@ def generate(
             {"role": "user", "content": RETRY_MESSAGE},
         ]
     return Generation(raw, None, attempts, time.perf_counter() - start, error or "invalid_json")
+
+
+def edit_item(
+    edit: Edit, mode: str, graph: Any = None, grounded: bool = False, **extra: Any
+) -> tuple[dict, list[dict]]:
+    """The generation record and chat messages for one edit.
+
+    `graph` is any object with the `GrammarGraph` methods `concept_for` and
+    `snippet`; it is optional for ungrounded systems. A grounded system gets no
+    snippet for an error type without a concept, which `grounded` in the record
+    shows. `extra` fields (for example `system` and `run`) are added to the record.
+    """
+    level = prompt_level(edit.cefr_level)
+    concept_id = graph.concept_for(edit.error_type) if graph is not None else None
+    snippet = graph.snippet(concept_id, level) if concept_id else None
+    record = {
+        **extra,
+        "edit_id": edit.edit_id,
+        "level": level,
+        "mode": mode,
+        "grounded": bool(grounded and snippet),
+        "concept_id": concept_id,
+        "concept_name": snippet["name"] if snippet else None,
+    }
+    return record, build_messages(edit, level, mode, snippet if grounded else None)
 
 
 def done_ids(path: str | Path) -> set[str]:
