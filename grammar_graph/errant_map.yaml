@@ -1,0 +1,42 @@
+# ERRANT error type -> grammar concept ID. Format: see README.md in this folder.
+#
+# An ERRANT error type is an operation (M missing, R replacement, U unnecessary)
+# plus a category, for example R:VERB:SVA. A lookup checks `overrides` for the full
+# type first and then `categories` for the category alone. UNK has no operation.
+
+categories:
+  ADJ: adjective_choice                 # big -> large
+  ADJ:FORM: comparatives_superlatives   # more big -> bigger
+  ADV: adverb_choice                    # also -> too
+  CONJ: conjunctions                    # but -> because
+  CONTR: contractions                   # isn't -> is not
+  DET: articles_a_an_the                # a -> the
+  MORPH: word_formation                 # quick -> quickly
+  NOUN: noun_choice                     # job -> work
+  NOUN:INFL: irregular_plurals          # childs -> children
+  NOUN:NUM: noun_plurals                # two cat -> two cats
+  NOUN:POSS: possessive_s               # my friend house -> my friend's house
+  ORTH: capitals_and_spacing            # english -> English
+  OTHER: other_error                    # changes ERRANT cannot label
+  PART: phrasal_verbs                   # the up in "give up"
+  PREP: preposition_choice              # interested about -> interested in
+  PRON: personal_pronouns               # me -> I
+  PUNCT: sentence_punctuation           # missing full stop
+  SPELL: spelling                       # goverment -> government
+  UNK: other_error                      # error found but not corrected
+  VERB: verb_choice                     # make -> do
+  VERB:FORM: verb_form_after_to         # to going -> to go
+  VERB:INFL: irregular_verbs            # catched -> caught
+  VERB:SVA: subject_verb_agreement      # she like -> she likes
+  VERB:TENSE: verb_tense_choice         # I go yesterday -> I went yesterday
+  WO: word_order                        # always I go -> I always go
+
+overrides:
+  U:DET: zero_article                   # The life is hard -> Life is hard
+  M:PRON: subject_required              # Is raining -> It is raining
+  M:VERB:FORM: verb_patterns            # I want go -> I want to go
+  U:VERB:FORM: base_form_after_modals   # I must to go -> I must go
+  M:VERB:TENSE: auxiliary_verbs         # She working -> She is working
+  U:VERB:TENSE: auxiliary_verbs         # She was went home -> She went home
+  M:PUNCT: commas                       # missing comma
+  U:PUNCT: commas                       # unnecessary comma

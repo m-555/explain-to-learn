@@ -1,0 +1,29 @@
+# ERRANT mapping for the test graph.
+categories:
+  ADJ: other_error
+  ADJ:FORM: other_error
+  ADV: other_error
+  CONJ: other_error
+  CONTR: other_error
+  DET: articles_a_an_the
+  MORPH: other_error
+  NOUN: other_error
+  NOUN:INFL: other_error
+  NOUN:NUM: noun_plurals
+  NOUN:POSS: other_error
+  ORTH: other_error
+  OTHER: other_error
+  PART: other_error
+  PREP: other_error
+  PRON: other_error
+  PUNCT: other_error
+  SPELL: other_error
+  UNK: other_error
+  VERB: other_error
+  VERB:FORM: other_error
+  VERB:INFL: other_error
+  VERB:SVA: subject_verb_agreement
+  VERB:TENSE: other_error
+  WO: other_error
+overrides:
+  U:DET: zero_article
