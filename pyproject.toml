@@ -19,12 +19,14 @@ data = ["errant>=3.0", "spacy>=3.7"]
 graph = ["networkx>=3.2", "pyyaml>=6.0", "rdflib>=7.0"]
 # PyTorch is installed separately (CUDA 12.8 or newer build), see README.
 model = [
-    "transformers>=4.46",
+    "transformers>=4.56",
     "peft>=0.13",
     "trl>=0.12",
     "accelerate>=1.0",
     "datasets>=3.0",
 ]
+# Reading configs/systems.yaml; the OpenAI-compatible backend needs nothing else.
+generate = ["pyyaml>=6.0"]
 demo = ["gradio>=5.0"]
 
 [tool.hatch.build.targets.wheel]
