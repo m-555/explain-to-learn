@@ -70,7 +70,10 @@ def join_key(
     key = {row["item_id"]: row for row in key_rows}
     missing = sorted(set(ratings) - set(key))
     if missing:
-        raise ValueError(f"{len(missing)} rated items are not in the key, e.g. {missing[0]}")
+        raise ValueError(
+            f"{len(missing)} rated items are not in the key, e.g. {missing[0]}; use the key "
+            "made with the rating sheet that was rated (--key)"
+        )
     return [key[item_id] | scores for item_id, scores in sorted(ratings.items())]
 
 

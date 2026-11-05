@@ -78,7 +78,7 @@ def run(args: argparse.Namespace) -> None:
 
     ids = args.gee_dir / "edit_ids.txt"
     if not ids.is_file():
-        raise SystemExit(f"{ids} not found; run the prepare step first")
+        raise SystemExit(f"{ids} not found; run first: python scripts/evaluate_on_gee.py prepare")
     run_system.main(
         ["--system", args.system, "--run", RUN, "--mode", "explain", "--ids", str(ids)]
         + ["--edits", str(args.edits), "--config", str(args.config), "--graph", str(args.graph)]
@@ -257,7 +257,9 @@ def compare(args: argparse.Namespace) -> None:
     references_path = args.gee_dir / "references.jsonl"
     references = read_rows(references_path) if references_path.is_file() else []
     if not references:
-        raise SystemExit(f"No references in {args.gee_dir}; run the prepare step first")
+        raise SystemExit(
+            f"No references in {args.gee_dir}; run first: python scripts/evaluate_on_gee.py prepare"
+        )
     wanted = {r["edit_id"] for r in references}
     edits = {e.edit_id: e for e in read_jsonl(args.edits) if e.edit_id in wanted}
     outputs = {}

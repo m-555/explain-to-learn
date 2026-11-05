@@ -108,7 +108,13 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
 
 def system_settings(args: argparse.Namespace) -> dict:
     """The explanation system from the config, with the command-line overrides."""
-    system = dict(load_systems(args.config)[args.system])
+    systems = load_systems(args.config)
+    if args.system not in systems:
+        raise SystemExit(
+            f"error: no system {args.system!r} in {args.config}; "
+            f"choose from {', '.join(sorted(systems))}"
+        )
+    system = dict(systems[args.system])
     if args.backend:
         system["backend"] = args.backend
     if args.model:
@@ -170,7 +176,13 @@ def build_demo(args: argparse.Namespace) -> Demo:
     graph = open_graph(args.graph)
     if args.fake:
         return Demo(StubCorrector(), StubAnnotator(), Explainer(StubBackend()), graph)
-    corrector = make_corrector(load_correctors(args.config)[args.corrector])
+    correctors = load_correctors(args.config)
+    if args.corrector not in correctors:
+        raise SystemExit(
+            f"error: no corrector {args.corrector!r} in {args.config}; "
+            f"choose from {', '.join(sorted(correctors))}"
+        )
+    corrector = make_corrector(correctors[args.corrector])
     explainer = Explainer.from_system(args.system, system_settings(args))
     return Demo(corrector, ErrantAnnotator(), explainer, graph)
 

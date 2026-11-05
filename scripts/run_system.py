@@ -48,14 +48,22 @@ def main(argv: list[str] | None = None) -> None:
     parser.add_argument("--overwrite", action="store_true", help="Start the run again")
     args = parser.parse_args(argv)
 
-    system = load_systems(args.config)[args.system]
+    systems = load_systems(args.config)
+    if args.system not in systems:
+        parser.error(
+            f"no system {args.system!r} in {args.config}; choose from {', '.join(sorted(systems))}"
+        )
+    system = systems[args.system]
     if args.adapter:
         system["adapter"] = args.adapter
     edits = {edit.edit_id: edit for edit in read_jsonl(args.edits)}
     ids = read_ids(args.ids)[: args.limit]
     missing = [edit_id for edit_id in ids if edit_id not in edits]
     if missing:
-        raise SystemExit(f"{len(missing)} edit IDs not in {args.edits}, e.g. {missing[0]}")
+        raise SystemExit(
+            f"{len(missing)} edit IDs not in {args.edits}, e.g. {missing[0]}; check --ids, or "
+            "build the edit table again with: python -m explain_to_learn.edits build"
+        )
 
     out_path = args.out_dir / args.system / f"{args.run}.jsonl"
     if args.overwrite and out_path.exists():

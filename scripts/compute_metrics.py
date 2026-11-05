@@ -83,7 +83,14 @@ def score_system(
 def compute(args: argparse.Namespace, graph: GrammarGraph) -> dict[str, Any]:
     """All systems' summaries, breakdowns and paired comparisons."""
     all_edits = {edit.edit_id: edit for edit in read_jsonl(args.edits)}
-    edits = [all_edits[i] for i in read_ids(args.ids)]
+    ids = read_ids(args.ids)
+    missing = [edit_id for edit_id in ids if edit_id not in all_edits]
+    if missing:
+        raise SystemExit(
+            f"{len(missing)} edit IDs not in {args.edits}, e.g. {missing[0]}; check --ids, or "
+            "build the edit table again with: python -m explain_to_learn.edits build"
+        )
+    edits = [all_edits[i] for i in ids]
     terms = load_terms(args.terms)
     check = nli_contradiction_check() if args.contradiction == "nli" else None
 

@@ -84,7 +84,8 @@ def build_examples(
     missing = [row["edit_id"] for row in rows if row["edit_id"] not in edits]
     if missing:
         raise ValueError(
-            f"{len(missing)} silver edits are not in the edit table, e.g. {missing[0]}"
+            f"{len(missing)} silver edits are not in the edit table, e.g. {missing[0]}; "
+            "pass the edit table that the silver data was made from (--edits)"
         )
     held_out = validation_essays((edits[row["edit_id"]].essay_key for row in rows), share, seed)
     splits: dict[str, list[dict[str, Any]]] = {"train": [], "validation": []}

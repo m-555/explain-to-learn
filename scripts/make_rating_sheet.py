@@ -45,7 +45,10 @@ def build_items(
         edit = edits[edit_id]
         for system, rows in sorted(outputs.items()):
             if edit_id not in rows:
-                raise ValueError(f"System {system} has no output for {edit_id}")
+                raise ValueError(
+                    f"System {system} has no output for {edit_id}; run it on the gold IDs "
+                    "first with scripts/run_system.py"
+                )
             row = rows[edit_id]
             mode = row.get("mode", "explain")
             items.append(

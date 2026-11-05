@@ -125,14 +125,20 @@ def main(argv: list[str] | None = None) -> None:
     args = parser.parse_args(argv)
 
     if not args.preferences.is_file():
-        raise SystemExit(f"{args.preferences} not found; export the preference annotations first")
+        raise SystemExit(
+            f"{args.preferences} not found; judge pairs first in the annotation app: "
+            "python -m explain_to_learn.annotation --task preferences"
+        )
     splits, counts = build_preferences(
         read_rows(args.preferences), args.validation_share, args.seed
     )
     for name, count in sorted(counts.items()):
         print(f"{name}: {count}")
     if not counts["pairs"]:
-        raise SystemExit("No preference pairs to train on; nothing written")
+        raise SystemExit(
+            "No preference pairs to train on (every judgement is a tie, both bad or the same "
+            "output); nothing written. Judge more pairs in the annotation app."
+        )
     for split, examples in splits.items():
         write_rows(examples, args.out / f"{split}.jsonl")
         print(f"{split}: {len(examples)} pairs -> {args.out / f'{split}.jsonl'}")

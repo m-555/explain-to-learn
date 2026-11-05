@@ -176,7 +176,10 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     check_output_arguments(parser, args)
     missing = [s for s in SPLITS if not (args.data_dir / f"{s}.jsonl").is_file()]
     if missing:
-        parser.error(f"no {' or '.join(missing)} pairs in {args.data_dir}; run preference.py first")
+        parser.error(
+            f"no {' or '.join(missing)} pairs in {args.data_dir}; "
+            "build them with: python -m explain_to_learn.preference"
+        )
     return args
 
 

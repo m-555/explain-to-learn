@@ -214,7 +214,9 @@ def handcheck_accuracy(path: str | Path) -> dict:
         elif mark in NO:
             rated += 1
         else:
-            raise ValueError(f"Unknown mark {mark!r} for {row['edit_id']}")
+            raise ValueError(
+                f"Unknown mark {mark!r} for {row['edit_id']}; mark items 1 (correct) or 0"
+            )
     low, high = wilson_interval(correct, rated)
     return {
         "rated": rated,

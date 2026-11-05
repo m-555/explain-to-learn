@@ -115,7 +115,10 @@ class PreferenceTask(Task):
         self.edits = {e.edit_id: e for e in read_jsonl(edits_path) if e.edit_id in wanted}
         missing = sorted(wanted - set(self.edits))
         if missing:
-            raise ValueError(f"{len(missing)} edits are not in {edits_path}, e.g. {missing[0]}")
+            raise ValueError(
+                f"{len(missing)} edits are not in {edits_path}, e.g. {missing[0]}; give the "
+                "edit table that the run files were made from (--edits)"
+            )
         grounded = any(pair["grounded"] for pair in self.pairs)
         self.graph = open_graph(graph_dir) if grounded else None
         order = [(pair["edit_id"], *self.names) for pair in self.pairs]

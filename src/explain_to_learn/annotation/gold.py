@@ -92,7 +92,8 @@ class GoldTask(Task):
         missing = [edit_id for edit_id in ids if edit_id not in edits]
         if missing:
             raise ValueError(
-                f"{len(missing)} gold edits are not in {edits_path}, e.g. {missing[0]}"
+                f"{len(missing)} gold edits are not in {edits_path}, e.g. {missing[0]}; build "
+                "the edit table first (README, quick start)"
             )
         self.edits = [edits[edit_id] for edit_id in ids]
         self.has_drafts = bool(drafts_paths)

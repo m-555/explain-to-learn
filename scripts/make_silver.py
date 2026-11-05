@@ -46,7 +46,13 @@ RESULTS_DIR = Path("eval/results")
 
 def generate(args: argparse.Namespace) -> None:
     """Step `generate`: run the teacher on a seeded sample of training edits."""
-    system = load_systems(args.config)[args.system]
+    systems = load_systems(args.config)
+    if args.system not in systems:
+        raise SystemExit(
+            f"error: no system {args.system!r} in {args.config}; "
+            f"choose from {', '.join(sorted(systems))}"
+        )
+    system = systems[args.system]
     graph = open_graph(args.graph)
     edits = read_jsonl(args.edits)
     selected = select_training_edits(
