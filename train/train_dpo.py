@@ -10,8 +10,9 @@ system D itself and no second model is loaded.
 The trained adapter is saved to `outputs/adapters/<run>/` (git-ignored), without the
 reference copy, with `run_info.json`: settings, data sizes, losses, reward accuracy and
 margin on the validation pairs, peak GPU memory, run time and library versions. It loads
-on the base model like the C and D adapters. Loading the config, the library versions,
-counting long examples and the Hub upload reuse the helpers of `train/train_lora.py`.
+on the base model like the C and D adapters. Loading the config, naming the logging
+project, counting long examples, the argument checks, the peak memory, the library
+versions and the Hub upload reuse the helpers of `train/train_lora.py`.
 
 Checked against TRL 1.15.0 and PEFT 0.21.2, the versions pinned in the `train` extra:
 `DPOConfig` takes `beta`, `loss_type` (a list) and `max_length` (there is no separate
@@ -33,13 +34,20 @@ from __future__ import annotations
 
 import argparse
 import json
-import os
 import time
 from pathlib import Path
 from typing import Any
 
 # train_lora.py sits next to this script, so Python finds it when the script runs.
-from train_lora import count_long_examples, library_versions, load_config, push_adapter
+from train_lora import (
+    check_output_arguments,
+    count_long_examples,
+    library_versions,
+    load_config,
+    peak_gpu_memory,
+    push_adapter,
+    set_logging_project,
+)
 
 CONFIG_PATH = Path(__file__).with_name("dpo_config.yaml")
 SPLITS = ("train", "validation")
@@ -98,10 +106,7 @@ def train(config: dict[str, Any], args: argparse.Namespace) -> dict[str, Any]:
     set_seed(config["seed"])
     torch.cuda.reset_peak_memory_stats()
     model_cfg = config["model"]
-    if args.report_to == "wandb":
-        os.environ.setdefault("WANDB_PROJECT", config["logging"]["project"])
-    elif args.report_to == "mlflow":
-        os.environ.setdefault("MLFLOW_EXPERIMENT_NAME", config["logging"]["project"])
+    set_logging_project(args.report_to, config["logging"]["project"])
 
     tokenizer = AutoTokenizer.from_pretrained(model_cfg["name"])
     base = AutoModelForCausalLM.from_pretrained(
@@ -142,10 +147,7 @@ def train(config: dict[str, Any], args: argparse.Namespace) -> dict[str, Any]:
         "eval_reward_accuracy": evaluation.get("eval_rewards/accuracies"),
         "eval_reward_margin": evaluation.get("eval_rewards/margins"),
         "train_minutes": round(train_minutes, 1),
-        "peak_gpu_memory_gb": {
-            "allocated": round(torch.cuda.max_memory_allocated() / 1024**3, 2),
-            "reserved": round(torch.cuda.max_memory_reserved() / 1024**3, 2),
-        },
+        "peak_gpu_memory_gb": peak_gpu_memory(),
         "gpu": torch.cuda.get_device_name(0),
         "versions": library_versions(),
     }
@@ -171,12 +173,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     args = parser.parse_args(argv)
 
     args.run_name = args.run_name or f"d-dpo-{args.variant}"
-    if args.push_to_hub and not args.hub_repo:
-        parser.error("--push-to-hub needs --hub-repo")
-    if args.push_to_hub and not os.environ.get("HF_TOKEN"):
-        parser.error("--push-to-hub needs a Hugging Face token in HF_TOKEN")
-    if (args.output_dir / args.run_name / "adapter_config.json").exists():
-        parser.error(f"{args.output_dir / args.run_name} already exists; choose another --run-name")
+    check_output_arguments(parser, args)
     missing = [s for s in SPLITS if not (args.data_dir / f"{s}.jsonl").is_file()]
     if missing:
         parser.error(f"no {' or '.join(missing)} pairs in {args.data_dir}; run preference.py first")
