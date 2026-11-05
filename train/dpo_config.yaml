@@ -1,0 +1,43 @@
+# DPO (direct preference optimisation) on top of the system D adapter, on one RTX 5090.
+#
+# `defaults` is the main run. Each entry under `variants` changes only the settings it
+# lists. Build the pairs, then train one variant:
+#   python -m explain_to_learn.preference
+#   python train/train_dpo.py --variant beta01
+#
+# DPO in one sentence: for each prompt, training raises the likelihood of the output a
+# teacher preferred over the other one, measured against a frozen reference model (system
+# D before DPO), so the model learns the preference without drifting far from D.
+
+defaults:
+  seed: 42                          # Seeds data order and the train/validation split.
+
+  model:
+    name: Qwen/Qwen3-4B-Instruct-2507  # The base model of system D, loaded in bf16.
+    adapter: outputs/adapters/d-r16    # The system D adapter (folder or Hub ID); DPO keeps training it.
+    max_length: 1024                # Tokens of prompt + answer, as in SFT; train_dpo.py counts longer pairs, which are truncated.
+
+  training:
+    beta: 0.1                       # Weight of the pull back to the reference: higher keeps the model closer to system D (TRL default).
+    loss_type: sigmoid              # The original DPO loss (Rafailov et al., 2023).
+    epochs: 2                       # Passes over the pairs; the validation loss after each one shows overfitting on small data.
+    learning_rate: 5.0e-6           # TRL's DPO example rate with LoRA, 40 times lower than SFT: DPO only adjusts a tuned adapter.
+    lr_scheduler: cosine            # After warm-up the rate falls to zero along a cosine curve.
+    warmup_ratio: 0.1               # The first 10% of steps raise the rate linearly from zero.
+    weight_decay: 0.0               # No weight decay on the small LoRA matrices.
+    optimizer: adamw_torch          # Standard AdamW, as for SFT.
+    batch_size: 4                   # Pairs per forward pass; each pair runs twice (chosen and rejected).
+    gradient_accumulation: 4        # Passes per optimiser step, so the effective batch is 4 x 4 = 16 pairs.
+    gradient_checkpointing: true    # Recompute activations in the backward pass, to save memory.
+    logging_steps: 5                # Log loss, reward margin and accuracy every 5 optimiser steps.
+
+  logging:
+    report_to: none                 # none, wandb or mlflow; off unless chosen here or with --report-to.
+    project: explain-to-learn       # Weights & Biases project or MLflow experiment name.
+
+variants:
+  beta01: {}                        # The defaults.
+
+  beta03:                           # A stronger pull to system D: tests whether beta 0.1 drifts too far.
+    training:
+      beta: 0.3
