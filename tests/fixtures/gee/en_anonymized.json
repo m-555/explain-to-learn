@@ -1,0 +1,127 @@
+[
+ {
+  "text": "<b>Source:</b> She like apples and he play football.<br><b>Target:</b> She likes apples and he plays football.<br><br><b>Explanation:</b><br>The word 'like' is replaced by 'likes' because the subject 'she' needs the third person singular form.<br>Error type: person and number<br>The word 'play' is replaced by 'plays' because the subject 'he' needs the third person singular form.<br>Error type: person and number",
+  "edits": "['replace', 'like', 'likes']<br>['replace', 'play', 'plays']",
+  "id": 1,
+  "annotator": 1,
+  "annotation_id": 101,
+  "created_at": "2024-01-01T00:00:00.000000Z",
+  "updated_at": "2024-01-01T00:00:00.000000Z",
+  "lead_time": 10.0,
+  "all_correct": "There is no error in the explanation(s) above."
+ },
+ {
+  "text": "<b>Source:</b> We discussed about the new plan<br><b>Target:</b> We discussed the new plan.<br><br><b>Explanation:</b><br>The word 'about' is deleted because 'discuss' takes a direct object.<br>Error type: unnecessary word<br>A period is inserted because the sentence is a question.<br>Error type: punctuation",
+  "edits": "['delete', 'about', '']<br>['insert', '', '.']",
+  "id": 2,
+  "annotator": 1,
+  "annotation_id": 102,
+  "created_at": "2024-01-01T00:00:00.000000Z",
+  "updated_at": "2024-01-01T00:00:00.000000Z",
+  "lead_time": 10.0,
+  "label": [
+   {
+    "start": "/text()[1]",
+    "startOffset": 0,
+    "end": "/text()[1]",
+    "endOffset": 34,
+    "globalOffsets": {
+     "start": 208,
+     "end": 242
+    },
+    "text": "because the sentence is a question",
+    "labels": [
+     "Wrong error explanation"
+    ]
+   },
+   {
+    "start": "/text()[1]",
+    "startOffset": 0,
+    "end": "/text()[1]",
+    "endOffset": 3,
+    "globalOffsets": {
+     "start": 65,
+     "end": 68
+    },
+    "text": "new",
+    "labels": [
+     "Missing error"
+    ]
+   }
+  ]
+ },
+ {
+  "text": "<b>Source:</b> He go to school by foot.<br><b>Target:</b> He goes to school on foot.<br><br><b>Explanation:</b><br>The word 'go' is replaced by 'goes' because the subject is 'he'.<br>Error type: person and number",
+  "edits": "['replace', 'go', 'goes']<br>['replace', 'by', 'on']",
+  "id": 3,
+  "annotator": 1,
+  "annotation_id": 103,
+  "created_at": "2024-01-01T00:00:00.000000Z",
+  "updated_at": "2024-01-01T00:00:00.000000Z",
+  "lead_time": 10.0
+ },
+ {
+  "text": "<b>Source:</b> I always am late.<br><b>Target:</b> I am always late.<br><br><b>Explanation:</b><br>The word 'always' is relocated after 'am' because adverbs of frequency follow 'be'.<br>Error type: word order",
+  "edits": "['relocate', 'always', 'always']",
+  "id": 4,
+  "annotator": 1,
+  "annotation_id": 104,
+  "created_at": "2024-01-01T00:00:00.000000Z",
+  "updated_at": "2024-01-01T00:00:00.000000Z",
+  "lead_time": 10.0,
+  "all_correct": "There is no error in the explanation(s) above."
+ },
+ {
+  "text": "<b>Source:</b> This sentence was never written by a learner.<br><b>Target:</b> This sentence is never written by a learner.<br><br><b>Explanation:</b><br>The word 'was' is replaced by 'is' to keep the present tense.<br>Error type: tense",
+  "edits": "['replace', 'was', 'is']",
+  "id": 5,
+  "annotator": 1,
+  "annotation_id": 105,
+  "created_at": "2024-01-01T00:00:00.000000Z",
+  "updated_at": "2024-01-01T00:00:00.000000Z",
+  "lead_time": 10.0,
+  "all_correct": "There is no error in the explanation(s) above."
+ },
+ {
+  "text": "<b>Source:</b> However we left early so we missed it.<br><b>Target:</b> However, we left early, so we missed it.<br><br><b>Explanation:</b><br>A comma is inserted after 'However' because it introduces the sentence.<br>Error type: punctuation<br>A comma is inserted before 'so' because it joins two clauses.<br>Error type: punctuation",
+  "edits": "['insert', '', ',']<br>['insert', '', ',']",
+  "id": 6,
+  "annotator": 1,
+  "annotation_id": 106,
+  "created_at": "2024-01-01T00:00:00.000000Z",
+  "updated_at": "2024-01-01T00:00:00.000000Z",
+  "lead_time": 10.0,
+  "all_correct": "There is no error in the explanation(s) above."
+ },
+ {
+  "text": "<b>Source:</b> He don't know it.<br><b>Target:</b> He doesn't know it.<br><br><b>Explanation:</b><br>The word \"don't\" is replaced by \"doesn't\" because the subject 'he' is singular.<br>Error type: person and number",
+  "edits": "['replace', \"don't\", \"doesn't\"]",
+  "id": 7,
+  "annotator": 1,
+  "annotation_id": 107,
+  "created_at": "2024-01-01T00:00:00.000000Z",
+  "updated_at": "2024-01-01T00:00:00.000000Z",
+  "lead_time": 10.0,
+  "all_correct": "There is no error in the explanation(s) above."
+ },
+ {
+  "text": "<b>Source:</b> They goes home.<br><b>Target:</b> They go home.<br><br><b>Explanation:</b><br>The word 'goes' is replaced by 'go' because the subject is plural.<br>Error type: person and number",
+  "edits": "['insert', '', ''s']",
+  "id": 8,
+  "annotator": 1,
+  "annotation_id": 108,
+  "created_at": "2024-01-01T00:00:00.000000Z",
+  "updated_at": "2024-01-01T00:00:00.000000Z",
+  "lead_time": 10.0
+ },
+ {
+  "text": "<b>Source:</b> It is fine.<br><b>Target:</b> It is fine.<br><br><b>Explanation:</b><br>There is nothing to correct.<br>Error type: none",
+  "edits": "",
+  "id": 9,
+  "annotator": 1,
+  "annotation_id": 109,
+  "created_at": "2024-01-01T00:00:00.000000Z",
+  "updated_at": "2024-01-01T00:00:00.000000Z",
+  "lead_time": 10.0
+ }
+]
