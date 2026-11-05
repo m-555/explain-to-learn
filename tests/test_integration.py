@@ -13,6 +13,7 @@ All sentences are invented for the tests.
 
 import importlib.util
 import json
+import sys
 from pathlib import Path
 
 import pytest
@@ -40,8 +41,10 @@ TERMS = ROOT / "configs" / "grammar_terms.txt"
 
 
 def load_script(path: Path):
+    """Import a script by its path; registered in sys.modules for its dataclasses."""
     spec = importlib.util.spec_from_file_location(path.stem, path)
     module = importlib.util.module_from_spec(spec)
+    sys.modules[spec.name] = module
     spec.loader.exec_module(module)
     return module
 
@@ -255,3 +258,90 @@ def test_pipeline_output_scores_like_a_run_system_file(graph, tmp_path):
         compute_metrics.read_outputs(out), EDITS, graph, load_terms(TERMS), "explain"
     )
     assert summarize(scored)["faithful"] == 1.0
+
+
+class SentenceCorrector:
+    """Corrects the sentences it knows; fails if `calls_allowed` is used up."""
+
+    def __init__(self, corrections, calls_allowed=100):
+        self.corrections, self.calls_allowed = corrections, calls_allowed
+
+    def correct(self, sentences):
+        assert self.calls_allowed > 0, "the corrector should not be called"
+        self.calls_allowed -= 1
+        return [self.corrections.get(s, s) for s in sentences]
+
+
+def correction_args(raw_dir, tmp_path, *extra):
+    return [
+        "--run", "test", "--raw", str(raw_dir), "--config", str(ROOT / "configs" / "systems.yaml"),
+        "--out-dir", str(tmp_path / "outputs"), "--results", str(tmp_path / "results"), *extra,
+    ]  # fmt: skip
+
+
+def test_dev_sentences_for_correction_come_with_levels_and_references(raw_dir):
+    script = load_script(ROOT / "scripts" / "evaluate_correction.py")
+    sentences = script.dev_sentences(raw_dir)
+
+    # Three W&I dev files (A, B, C) with the two fixture essays, then LOCNESS.
+    assert len(sentences) == 13
+    assert [s.level for s in sentences[:4]] == ["A2", "A2", "A2", "C2"]
+    assert sentences[-1].level == "native"
+    assert sentences[0].tokens == "She do n't like to going ."
+    assert sentences[0].reference.startswith("S She do n't like to going .\nA 1 2|||R:VERB:SVA")
+    assert sentences[1].reference.endswith("|||noop|||-NONE-|||REQUIRED|||-NONE-|||0")
+
+
+def test_correction_run_scores_each_level_and_resumes(raw_dir, tmp_path, monkeypatch):
+    script = load_script(ROOT / "scripts" / "evaluate_correction.py")
+
+    def fake_parallel(orig, hyp, out_m2):
+        lines = Path(hyp).read_text().splitlines()
+        Path(out_m2).write_text("\n\n".join(f"S {line}" for line in lines) + "\n")
+
+    def fake_compare(hyp_m2, ref_m2):
+        n = len(script.m2_blocks(hyp_m2))
+        assert n == len(script.m2_blocks(ref_m2))
+        return {"tp": n, "fp": 0, "fn": 0, "precision": 1.0, "recall": 1.0, "f0.5": 1.0}
+
+    monkeypatch.setattr(script, "errant_parallel", fake_parallel)
+    monkeypatch.setattr(script, "errant_compare", fake_compare)
+    monkeypatch.setattr(script, "spacy_tokeniser", lambda: lambda text: text)
+    # One call for the full run and one for the short run; the resumed run makes none.
+    corrector = SentenceCorrector({"I has a cat.": "I have a cat."}, calls_allowed=2)
+    monkeypatch.setattr(script, "make_corrector", lambda settings: corrector)
+
+    script.main(correction_args(raw_dir, tmp_path))
+    results = json.loads((tmp_path / "results" / "correction_test.json").read_text())
+    assert results["overall"]["sentences"] == 13
+    assert {level: r["sentences"] for level, r in results["by_level"].items()} == {
+        "A2": 9,
+        "C2": 3,
+        "native": 1,
+    }
+    assert results["corrector"]["model"] == "Unbabel/gec-t5_small"
+    hyp = (tmp_path / "outputs" / "test" / "hyp.txt").read_text().splitlines()
+    assert hyp[3] == "I have a cat." and len(hyp) == 13
+
+    script.main(correction_args(raw_dir, tmp_path))  # resumes: no corrector call
+    report = (tmp_path / "results" / "correction_test.md").read_text()
+    assert "| C2 | 3 | 3 | 0 | 0 | 1.0000 | 1.0000 | 1.0000 |" in report
+    assert "cat" not in report and "She" not in report
+
+    script.main(correction_args(raw_dir, tmp_path, "--run", "short", "--limit", "4"))
+    short = json.loads((tmp_path / "results" / "correction_short.json").read_text())
+    assert short["overall"]["sentences"] == 4 and short["limit"] == 4
+
+
+def test_correction_f05_with_errant(raw_dir, tmp_path, monkeypatch, errant_annotator):
+    script = load_script(ROOT / "scripts" / "evaluate_correction.py")
+    corrector = SentenceCorrector({"I has a cat.": "I have a cat."})
+    monkeypatch.setattr(script, "make_corrector", lambda settings: corrector)
+
+    script.main(correction_args(raw_dir, tmp_path))
+    results = json.loads((tmp_path / "results" / "correction_test.json").read_text())
+    # Each W&I file has 5 gold edits and LOCNESS 1; only "has -> have" is corrected.
+    overall = results["overall"]
+    assert (overall["tp"], overall["fp"], overall["fn"]) == (3, 0, 13)
+    assert results["by_level"]["C2"]["f0.5"] == 1.0
+    assert results["by_level"]["A2"]["recall"] == 0.0
