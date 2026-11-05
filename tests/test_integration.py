@@ -345,3 +345,25 @@ def test_correction_f05_with_errant(raw_dir, tmp_path, monkeypatch, errant_annot
     assert (overall["tp"], overall["fp"], overall["fn"]) == (3, 0, 13)
     assert results["by_level"]["C2"]["f0.5"] == 1.0
     assert results["by_level"]["A2"]["recall"] == 0.0
+
+
+def test_run_system_can_run_another_adapter(graph, tmp_path, monkeypatch):
+    run_system = load_script(ROOT / "scripts" / "run_system.py")
+    loaded = {}
+
+    def backend(system):
+        loaded.update(system)
+        return TeacherModel()
+
+    monkeypatch.setattr(run_system, "make_backend", backend)
+    monkeypatch.setattr(run_system, "open_graph", lambda directory: graph)
+    write_jsonl(EDITS, tmp_path / "edits.jsonl")
+    (tmp_path / "ids.txt").write_text("wi-1-0-0\n")
+
+    run_system.main(
+        ["--system", "D", "--run", "dev-r8", "--adapter", "outputs/adapters/d-r8"]
+        + ["--ids", str(tmp_path / "ids.txt"), "--edits", str(tmp_path / "edits.jsonl")]
+        + ["--config", str(ROOT / "configs" / "systems.yaml"), "--out-dir", str(tmp_path)]
+    )
+    assert loaded["adapter"] == "outputs/adapters/d-r8" and loaded["grounded"]
+    assert (tmp_path / "D" / "dev-r8.jsonl").is_file()

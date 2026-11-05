@@ -8,6 +8,8 @@ attempts, latency and any error. A run resumes where it stopped unless
 Usage:
     python scripts/run_system.py --system B --run gold-explain \\
         --ids data/splits/gold_edit_ids.txt --mode explain
+    python scripts/run_system.py --system D --adapter outputs/adapters/d-r8 \\
+        --run dev-explain-r8 --ids outputs/dev_ids.txt
 """
 
 from __future__ import annotations
@@ -47,6 +49,9 @@ def main(argv: list[str] | None = None) -> None:
     parser.add_argument("--edits", type=Path, default=Path("data/processed/edits.jsonl"))
     parser.add_argument("--config", type=Path, default=Path("configs/systems.yaml"))
     parser.add_argument("--graph", type=Path, default=Path("grammar_graph"))
+    parser.add_argument(
+        "--adapter", help="LoRA adapter instead of the system's, e.g. outputs/adapters/d-r8"
+    )
     parser.add_argument("--out-dir", type=Path, default=Path("outputs"))
     parser.add_argument("--workers", type=int, default=1, help="Parallel requests (servers)")
     parser.add_argument("--limit", type=int, help="Only the first N edits (for a smoke test)")
@@ -54,6 +59,8 @@ def main(argv: list[str] | None = None) -> None:
     args = parser.parse_args(argv)
 
     system = load_systems(args.config)[args.system]
+    if args.adapter:
+        system["adapter"] = args.adapter
     edits = {edit.edit_id: edit for edit in read_jsonl(args.edits)}
     ids = read_ids(args.ids)[: args.limit]
     missing = [edit_id for edit_id in ids if edit_id not in edits]
