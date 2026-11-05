@@ -50,6 +50,7 @@ from train_lora import (
     peak_gpu_memory,
     push_adapter,
     set_logging_project,
+    write_environment,
 )
 
 CONFIG_PATH = Path(__file__).with_name("dpo_config.yaml")
@@ -157,6 +158,7 @@ def train(config: dict[str, Any], args: argparse.Namespace) -> dict[str, Any]:
         "versions": library_versions(),
     }
     (adapter_dir / "run_info.json").write_text(json.dumps(info, indent=2), encoding="utf-8")
+    write_environment(adapter_dir)
     return info
 
 

@@ -149,3 +149,11 @@ def test_git_commit_names_the_commit_and_uncommitted_changes(tmp_path):
     (tmp_path / "config.yaml").write_text("rank: 8\n")
     assert train_lora.git_commit(tmp_path) == head + "-dirty"
     assert train_lora.git_commit(tmp_path / "missing") == "unknown"
+
+
+def test_write_environment_lists_installed_packages_without_the_project(tmp_path):
+    path = train_lora.write_environment(tmp_path)
+    text = path.read_text(encoding="utf-8")
+    assert path == tmp_path / "environment.txt"
+    assert "pytest==" in text
+    assert "explain-to-learn" not in text.lower() and "explain_to_learn" not in text

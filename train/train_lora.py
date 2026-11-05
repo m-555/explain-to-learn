@@ -27,6 +27,7 @@ import importlib.metadata
 import json
 import os
 import subprocess
+import sys
 import time
 from datetime import datetime
 from pathlib import Path
@@ -131,6 +132,24 @@ def git_commit(repo: Path = REPO_ROOT) -> str:
     except (OSError, subprocess.CalledProcessError):
         return "unknown"
     return commit + ("-dirty" if dirty.returncode == 1 else "")
+
+
+def write_environment(adapter_dir: Path) -> Path:
+    """Save the installed packages (`pip freeze`) as `environment.txt` next to the adapter.
+
+    Together with the git commit in `run_info.json`, this pins every package version
+    behind a reported result. The project itself is left out (`--exclude-editable`), so
+    no local paths are recorded.
+    """
+    result = subprocess.run(
+        [sys.executable, "-m", "pip", "freeze", "--exclude-editable"],
+        capture_output=True,
+        text=True,
+    )
+    text = result.stdout if result.returncode == 0 else f"pip freeze failed:\n{result.stderr}"
+    path = adapter_dir / "environment.txt"
+    path.write_text(text, encoding="utf-8")
+    return path
 
 
 def load_with_unsloth(config: dict[str, Any]) -> tuple[Any, Any, None]:
@@ -279,6 +298,7 @@ def train(config: dict[str, Any], args: argparse.Namespace) -> dict[str, Any]:
         "versions": library_versions(),
     }
     (adapter_dir / "run_info.json").write_text(json.dumps(info, indent=2), encoding="utf-8")
+    write_environment(adapter_dir)
     return info
 
 
