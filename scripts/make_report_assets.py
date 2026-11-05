@@ -47,7 +47,8 @@ from matplotlib.figure import Figure
 from matplotlib.lines import Line2D
 
 from explain_to_learn.edits import Edit, read_jsonl
-from explain_to_learn.human_eval import DIMENSIONS, FLAG, join_key, read_csv, read_ratings
+from explain_to_learn.human_eval import DIMENSIONS, FLAG, join_key, read_ratings
+from explain_to_learn.io import read_csv
 from explain_to_learn.metrics import paired_bootstrap
 
 LEVELS = ("A1", "A2", "B1", "B2", "C1", "C2", "native")

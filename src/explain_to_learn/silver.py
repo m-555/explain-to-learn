@@ -16,7 +16,6 @@ marks back.
 
 from __future__ import annotations
 
-import csv
 import math
 import random
 from collections import Counter
@@ -24,6 +23,7 @@ from collections.abc import Callable, Iterable, Mapping
 from pathlib import Path
 
 from explain_to_learn.edits import Edit
+from explain_to_learn.io import read_csv, write_csv
 from explain_to_learn.metrics import concept_matches, faithfulness, shown_text
 from explain_to_learn.prompts import build_target, detokenize
 
@@ -166,28 +166,25 @@ def export_handcheck(
     Returns the number of rows written.
     """
     sample = random.Random(seed).sample(kept, min(n, len(kept)))
-    path = Path(path)
-    path.parent.mkdir(parents=True, exist_ok=True)
-    with path.open("w", encoding="utf-8", newline="") as out:
-        writer = csv.DictWriter(out, fieldnames=HANDCHECK_FIELDS)
-        writer.writeheader()
-        for item in sample:
-            edit = edits_by_id[item["edit_id"]]
-            writer.writerow(
-                {
-                    "edit_id": item["edit_id"],
-                    "level": item["level"],
-                    "mode": item["mode"],
-                    "error_type": edit.error_type,
-                    "sentence": detokenize(edit.original),
-                    "original_text": detokenize(edit.original_text),
-                    "corrected_text": detokenize(edit.corrected_text),
-                    "concept": item["concept"],
-                    "explanation": item["explanation"],
-                    "hint": item["hint"],
-                    "correct": "",
-                }
-            )
+    rows = []
+    for item in sample:
+        edit = edits_by_id[item["edit_id"]]
+        rows.append(
+            {
+                "edit_id": item["edit_id"],
+                "level": item["level"],
+                "mode": item["mode"],
+                "error_type": edit.error_type,
+                "sentence": detokenize(edit.original),
+                "original_text": detokenize(edit.original_text),
+                "corrected_text": detokenize(edit.corrected_text),
+                "concept": item["concept"],
+                "explanation": item["explanation"],
+                "hint": item["hint"],
+                "correct": "",
+            }
+        )
+    write_csv(rows, path, HANDCHECK_FIELDS)
     return len(sample)
 
 
@@ -208,17 +205,16 @@ def handcheck_accuracy(path: str | Path) -> dict:
     counted as unrated. Any other value raises `ValueError`.
     """
     rated = correct = unrated = 0
-    with Path(path).open(encoding="utf-8", newline="") as lines:
-        for row in csv.DictReader(lines):
-            mark = (row.get("correct") or "").strip().lower()
-            if not mark:
-                unrated += 1
-            elif mark in YES:
-                rated, correct = rated + 1, correct + 1
-            elif mark in NO:
-                rated += 1
-            else:
-                raise ValueError(f"Unknown mark {mark!r} for {row['edit_id']}")
+    for row in read_csv(path):
+        mark = (row.get("correct") or "").strip().lower()
+        if not mark:
+            unrated += 1
+        elif mark in YES:
+            rated, correct = rated + 1, correct + 1
+        elif mark in NO:
+            rated += 1
+        else:
+            raise ValueError(f"Unknown mark {mark!r} for {row['edit_id']}")
     low, high = wilson_interval(correct, rated)
     return {
         "rated": rated,

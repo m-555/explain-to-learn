@@ -17,12 +17,13 @@ only counts and means, never learner text, so its output can be committed.
 from __future__ import annotations
 
 import argparse
-import csv
 from collections import defaultdict
-from collections.abc import Iterable, Sequence
+from collections.abc import Sequence
 from pathlib import Path
 from statistics import mean
 from typing import Any
+
+from explain_to_learn.io import read_csv, write_csv
 
 DIMENSIONS = ("rule_correct", "error_located", "helps_fix", "fits_level")
 FLAG = "invented_rule"
@@ -48,22 +49,6 @@ def parse_rating(value: str | None, scale: dict[str, int]) -> int | None:
     if text.isdigit() and int(text) in scale.values():
         return int(text)
     raise ValueError(f"{value!r} is not one of {', '.join(scale)}")
-
-
-def read_csv(path: str | Path) -> list[dict[str, str]]:
-    """Read a CSV file with a header row into a list of dictionaries."""
-    with Path(path).open(encoding="utf-8", newline="") as file:
-        return list(csv.DictReader(file))
-
-
-def write_csv(rows: Iterable[dict[str, Any]], path: str | Path, columns: Sequence[str]) -> None:
-    """Write dictionaries to a CSV file with the given columns, in that order."""
-    path = Path(path)
-    path.parent.mkdir(parents=True, exist_ok=True)
-    with path.open("w", encoding="utf-8", newline="") as file:
-        writer = csv.DictWriter(file, fieldnames=list(columns), extrasaction="ignore")
-        writer.writeheader()
-        writer.writerows(rows)
 
 
 def read_ratings(path: str | Path) -> dict[str, dict[str, int | None]]:

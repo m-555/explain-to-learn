@@ -31,9 +31,8 @@ from explain_to_learn.human_eval import (
     RATING_COLUMNS,
     SCALE,
     SHEET_COLUMNS,
-    read_csv,
-    write_csv,
 )
+from explain_to_learn.io import read_csv, write_csv
 
 ITEM_FIELDS = SHEET_COLUMNS[1:]  # everything a rater sees except the item ID
 INSTRUCTIONS = (

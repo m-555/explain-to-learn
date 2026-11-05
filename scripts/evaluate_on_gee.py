@@ -44,8 +44,7 @@ from typing import Any
 
 from explain_to_learn.edits import Edit, read_jsonl
 from explain_to_learn.gee import GEE_FILE, match_edits, read_gee, reference_row
-from explain_to_learn.human_eval import write_csv
-from explain_to_learn.io import read_ids, read_rows, read_run, write_ids, write_rows
+from explain_to_learn.io import read_ids, read_rows, read_run, write_csv, write_ids, write_rows
 from explain_to_learn.metrics import faithfulness, paired_bootstrap, shown_text
 from explain_to_learn.prompts import detokenize, prompt_level
 from explain_to_learn.silver import wilson_interval

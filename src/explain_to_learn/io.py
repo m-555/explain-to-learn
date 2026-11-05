@@ -4,14 +4,17 @@
   line; `read_ids` and `write_ids`.
 - JSON Lines files (run files, silver data, SFT and DPO examples): one JSON object per
   line; `read_rows` and `write_rows`, and `read_run` for a run file by edit ID.
+- CSV files with a header row (rating sheets, the key, ratings, the hand-check):
+  `read_csv` and `write_csv`.
 
 `open_graph` loads the grammar graph from its folder.
 """
 
 from __future__ import annotations
 
+import csv
 import json
-from collections.abc import Iterable
+from collections.abc import Iterable, Sequence
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
@@ -53,6 +56,25 @@ def read_run(path: str | Path) -> dict[str, dict[str, Any]]:
     If an edit was run more than once, its last record wins.
     """
     return {row["edit_id"]: row for row in read_rows(path)}
+
+
+def read_csv(path: str | Path) -> list[dict[str, str]]:
+    """Read a CSV file with a header row into a list of dictionaries."""
+    with Path(path).open(encoding="utf-8", newline="") as file:
+        return list(csv.DictReader(file))
+
+
+def write_csv(rows: Iterable[dict[str, Any]], path: str | Path, columns: Sequence[str]) -> None:
+    """Write dictionaries to a CSV file with the given columns, in that order.
+
+    Keys of a row that are not in `columns` are left out. The folder is created if needed.
+    """
+    path = Path(path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("w", encoding="utf-8", newline="") as file:
+        writer = csv.DictWriter(file, fieldnames=list(columns), extrasaction="ignore")
+        writer.writeheader()
+        writer.writerows(rows)
 
 
 def open_graph(directory: str | Path) -> GrammarGraph:
