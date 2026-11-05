@@ -21,8 +21,9 @@
 #   - Apache 2.0, 21B mixture-of-experts with about 3.6B active parameters per
 #     token, released with MXFP4 weights (about 13 GB), so it fits on one 32 GB GPU
 #     with room for a long KV cache and fast batched generation.
-#   - Served with vLLM's OpenAI-compatible server, for example:
-#       vllm serve openai/gpt-oss-20b --port 8001
+#   - Served with vLLM's OpenAI-compatible server on port 8001, so that it can run
+#     next to the student model on port 8000:
+#       PORT=8001 bash scripts/serve_model.sh openai/gpt-oss-20b
 #     vLLM puts the reasoning in a separate field and returns only the final answer
 #     in `content`. If vLLM's MXFP4 kernels are not available for the RTX 5090
 #     (sm_120) in the installed version, serve the GGUF build with the llama.cpp
@@ -34,10 +35,14 @@
 #
 # Decoding is greedy (temperature 0) for every system, so runs are repeatable.
 # A to D use the transformers backend so that the base and tuned models run
-# through the same code; set `backend: openai` and `base_url` to use a server.
+# through the same code. With `backend: openai` they call the server started by
+#   bash scripts/serve_model.sh Qwen/Qwen3-4B-Instruct-2507 \
+#     system-c=outputs/adapters/c-r16 system-d=outputs/adapters/d-r16
+# at `base_url`, asking for `served_model` (the base model ID if not set).
 
 defaults:
   retries: 1
+  base_url: http://localhost:8000/v1
   decoding:
     temperature: 0.0
     top_p: 1.0
@@ -65,6 +70,7 @@ systems:
     # Local adapter directory written by train/train_lora.py (git-ignored), or its
     # Hugging Face Hub ID. C is trained without the graph snippet, D with it.
     adapter: outputs/adapters/c-r16
+    served_model: system-c
     grounded: false
     backend: transformers
 
@@ -72,6 +78,7 @@ systems:
     description: LoRA-tuned, with graph snippet
     model: Qwen/Qwen3-4B-Instruct-2507
     adapter: outputs/adapters/d-r16
+    served_model: system-d
     grounded: true
     backend: transformers
 
