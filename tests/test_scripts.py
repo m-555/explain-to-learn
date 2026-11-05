@@ -168,6 +168,16 @@ def test_make_silver_generate_filter_and_score(workspace, monkeypatch):
     score = json.loads(Path("results/silver_handcheck.json").read_text())
     assert (score["rated"], score["correct"]) == (6, 5)
 
+    # A hand-check file without marks must not overwrite the real result.
+    for row in rows:
+        row["correct"] = ""
+    with Path("unmarked.csv").open("w", newline="") as out:
+        writer = csv.DictWriter(out, fieldnames=list(rows[0]))
+        writer.writeheader()
+        writer.writerows(rows)
+    make_silver.main([*base[:-1], "unmarked.csv", "score"])
+    assert json.loads(Path("results/silver_handcheck.json").read_text()) == score
+
 
 @pytest.mark.parametrize("name", ["run_system", "make_silver", "compute_metrics"])
 def test_scripts_load_the_real_grammar_graph(name):

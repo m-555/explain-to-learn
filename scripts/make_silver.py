@@ -105,11 +105,16 @@ def filter_outputs(args: argparse.Namespace) -> None:
 def score(args: argparse.Namespace) -> None:
     """Step `score`: write the hand-check accuracy with its 95% Wilson interval."""
     result = handcheck_accuracy(args.handcheck)
+    if result["accuracy"] is None:
+        # Writing an empty result would overwrite a real one, for example when the marks
+        # are in the annotation app's file but --handcheck was left at its default.
+        print(
+            f"No rated items in {args.handcheck}; nothing written. Mark items in the "
+            "annotation app and pass its file with --handcheck."
+        )
+        return
     args.results.mkdir(parents=True, exist_ok=True)
     (args.results / "silver_handcheck.json").write_text(json.dumps(result, indent=2) + "\n")
-    if result["accuracy"] is None:
-        print("No rated items yet")
-        return
     print(
         f"Hand-check accuracy {100 * result['accuracy']:.1f}% "
         f"(95% CI {100 * result['low']:.1f}-{100 * result['high']:.1f}) on "
