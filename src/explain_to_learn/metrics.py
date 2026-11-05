@@ -446,26 +446,39 @@ def parse_errant_compare(output: str) -> dict:
     raise ValueError("No score table in errant_compare output")
 
 
-def correction_f05(orig: str | Path, hyp: str | Path, ref_m2: str | Path) -> dict:
-    """Span-based correction F0.5 of corrected sentences against a reference M2 file.
+def errant_parallel(orig: str | Path, hyp: str | Path, out_m2: str | Path) -> None:
+    """Write the M2 file of corrected sentences with ERRANT's `errant_parallel`.
 
     `orig` and `hyp` are text files with one tokenised sentence per line (original
     and system-corrected). Needs the `data` extra (ERRANT and a spaCy English model).
     """
+    subprocess.run(
+        ["errant_parallel", "-orig", str(orig), "-cor", str(hyp), "-out", str(out_m2)],
+        check=True,
+        capture_output=True,
+    )
+
+
+def errant_compare(hyp_m2: str | Path, ref_m2: str | Path) -> dict:
+    """Span-based correction scores of a hypothesis M2 file against a reference M2 file."""
+    result = subprocess.run(
+        ["errant_compare", "-hyp", str(hyp_m2), "-ref", str(ref_m2)],
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    return parse_errant_compare(result.stdout)
+
+
+def correction_f05(orig: str | Path, hyp: str | Path, ref_m2: str | Path) -> dict:
+    """Span-based correction F0.5 of corrected sentences against a reference M2 file.
+
+    `orig` and `hyp` are as for `errant_parallel`.
+    """
     with tempfile.TemporaryDirectory() as tmp:
         hyp_m2 = Path(tmp) / "hyp.m2"
-        subprocess.run(
-            ["errant_parallel", "-orig", str(orig), "-cor", str(hyp), "-out", str(hyp_m2)],
-            check=True,
-            capture_output=True,
-        )
-        result = subprocess.run(
-            ["errant_compare", "-hyp", str(hyp_m2), "-ref", str(ref_m2)],
-            check=True,
-            capture_output=True,
-            text=True,
-        )
-    return parse_errant_compare(result.stdout)
+        errant_parallel(orig, hyp, hyp_m2)
+        return errant_compare(hyp_m2, ref_m2)
 
 
 # --- Report ------------------------------------------------------------------------
