@@ -216,3 +216,42 @@ def test_edit_table_round_trip_keeps_every_field(tmp_path):
 
     write_jsonl(EDITS, tmp_path / "edits.jsonl")
     assert read_jsonl(tmp_path / "edits.jsonl") == EDITS
+
+
+def test_errant_on_free_text_gives_the_rows_of_the_edit_table(errant_annotator, tmp_path):
+    from conftest import WI_M2
+
+    from explain_to_learn.edits import Essay, essay_edits, parse_m2
+    from explain_to_learn.pipeline import text_edits
+    from explain_to_learn.prompts import detokenize
+
+    blocks = WI_M2.split("\n\n")
+    m2 = tmp_path / "wi.m2"
+    m2.write_text("\n\n".join([blocks[0], blocks[3]]) + "\n", encoding="utf-8")
+    sentences = parse_m2(m2)
+    table = essay_edits("wi", "dev", Essay("1", "B1", ""), sentences)
+
+    text = " ".join(detokenize(s.tokens) for s in sentences)
+    corrected = " ".join(detokenize(e.corrected) for e in {e.sent_idx: e for e in table}.values())
+    _, edits = text_edits(text, "B1", annotator=errant_annotator, corrected=corrected)
+
+    fields = ("sent_idx", "original", "corrected", "start", "end", "original_text")
+    fields += ("corrected_text", "error_type", "operation", "error_category", "cefr_level")
+    assert [[getattr(e, f) for f in fields] for e in edits] == [
+        [getattr(e, f) for f in fields] for e in table
+    ]
+
+
+def test_pipeline_output_scores_like_a_run_system_file(graph, tmp_path):
+    from explain_to_learn.pipeline import Explainer, explain_gold_edits
+
+    compute_metrics = load_script(ROOT / "scripts" / "compute_metrics.py")
+    explained = explain_gold_edits(EDITS, "explain", Explainer(TeacherModel(), system="D"), graph)
+    out = tmp_path / "D" / "gold.jsonl"
+    out.parent.mkdir()
+    out.write_text("".join(json.dumps(item.to_row()) + "\n" for item in explained))
+
+    scored = compute_metrics.score_system(
+        compute_metrics.read_outputs(out), EDITS, graph, load_terms(TERMS), "explain"
+    )
+    assert summarize(scored)["faithful"] == 1.0
