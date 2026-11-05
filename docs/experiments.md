@@ -8,12 +8,45 @@ environment active, unless a step says otherwise.
 The times are rough planning estimates for this GPU, not measurements. Steps marked
 *teacher time* are human work.
 
+## Make targets and the smoke test
+
+Each step names its `make` target from the [Makefile](../Makefile), which runs the
+step's commands and prints them first; `make -n TARGET` prints them without running
+anything, and `make help` lists the targets. The values that change between runs are
+variables set on the command line, for example `make train SYSTEM=C VARIANT=r8` or
+`make gold-runs MODE=hint`. The commands below are the reference; the targets are
+shortcuts for them.
+
+Before the first GPU run, and after any change to a script, run every step on an
+invented corpus against a fake model server:
+
+```bash
+make smoke
+```
+
+It takes about a minute and needs no GPU (`pytest -m smoke tests/smoke`; CI runs it on
+every push). It checks that each step runs and reads what the step before it wrote, in a
+temporary folder. It does not train, does not load a model and says nothing about the
+quality of the outputs: the fake server writes template answers, a stub folder stands
+in for the adapters, and the teacher's ratings and choices are simulated through the
+annotation app's own code.
+
+After every training or evaluation run, update the run registry, a table of every run
+with its date, commit, settings, peak GPU memory, training time and headline metrics,
+collected from the files the runs wrote:
+
+```bash
+python scripts/collect_runs.py
+```
+
+`make runs` does the same. Commit `eval/results/runs.md` with the result files.
+
 ## What is committed
 
 Learner text never enters the repository. Every step writes learner text (sentences,
-model outputs, rating sheets, keys) to the git-ignored `data/processed/` or `outputs/`
-folders, and commits only IDs and aggregate tables, mostly in `eval/results/`. Before
-each commit, check that nothing from those folders is staged:
+model outputs, rating sheets, keys, annotations) to the git-ignored `data/processed/` or
+`outputs/` folders, and commits only IDs and aggregate tables, mostly in
+`eval/results/`. Before each commit, check that nothing from those folders is staged:
 
 ```bash
 git status --short && git ls-files data/raw data/processed outputs
@@ -23,23 +56,23 @@ The second command must print nothing.
 
 ## Overview
 
-| Step | What | Time | Committed |
-| --- | --- | --- | --- |
-| [1](#1-environment) | Environment | 1-2 h the first time | nothing |
-| [2](#2-data-and-the-edit-table) | Data and the edit table | 5 min | nothing new (splits and statistics are already committed) |
-| [3](#3-grammar-graph) | Grammar graph content and validation | days of teacher time; checks take seconds | `grammar_graph/`, the graph figure |
-| [4](#4-baselines-a-and-b-on-a-dev-sample) | Baselines A and B on a dev sample | 30-60 min | `eval/results/metrics_dev-*.md`, `.json` |
-| [5](#5-silver-data-from-the-teacher) | Silver data from the teacher (system R) | 30-90 min | nothing yet |
-| [6](#6-silver-filter-and-the-200-item-hand-check) | Silver filter and hand-check | seconds; 3 h teacher time | `eval/results/silver_filter.*`, `silver_handcheck.json` |
-| [7](#7-lora-adapters-for-c-and-d) | LoRA adapters for C and D, four variants | 15-40 min per adapter | the chosen adapter paths in `configs/systems.yaml` |
-| [8](#8-gold-set-generation-for-a-b-c-d-and-r) | Gold-set generation for A, B, C, D and R | 1-2 h | nothing yet |
-| [9](#9-automatic-metrics) | Automatic metrics | 2 min | `eval/results/metrics_gold-*.md`, `.json` |
-| [10](#10-rating-sheets-and-ratings) | Rating sheets and ratings | seconds; 8-10 h teacher time | `eval/results/human_eval_*` |
-| [11](#11-agreement-and-the-llm-judge) | Agreement and the LLM judge | 30 min | `eval/results/agreement_*.md`, `human_eval_llm_judge*` |
-| [12](#12-correction-f05) | Correction F0.5 of the end-to-end pipeline | 15-30 min | `eval/results/correction_*.md`, `.json` |
-| [13](#13-analysis-assets) | Analysis assets | minutes | report tables and figures |
-| [14](#14-demo-and-hugging-face-space) | Demo and Hugging Face Space | 1 h | nothing (the Space is its own repository) |
-| [15](#15-release-checklist) | Release checklist and tag v1.0 | 2-4 h | cards, README, report, tag |
+| Step | What | Time | Make target | Committed |
+| --- | --- | --- | --- | --- |
+| [1](#1-environment) | Environment | 1-2 h the first time | `env-check` | nothing |
+| [2](#2-data-and-the-edit-table) | Data and the edit table | 5 min | `data` | nothing new (splits and statistics are already committed) |
+| [3](#3-grammar-graph) | Grammar graph content and validation | days of teacher time; checks take seconds | `graph-check` | `grammar_graph/`, the graph figure |
+| [4](#4-baselines-a-and-b-on-a-dev-sample) | Baselines A and B on a dev sample | 30-60 min | `baselines` | `eval/results/metrics_dev-*.md`, `.json` |
+| [5](#5-silver-data-from-the-teacher) | Silver data from the teacher (system R) | 30-90 min | `serve-teacher`, `silver` | nothing yet |
+| [6](#6-silver-filter-and-the-200-item-hand-check) | Silver filter and hand-check | seconds; 3 h teacher time | `silver`, `annotate`, `silver-score` | `eval/results/silver_filter.*`, `silver_handcheck.json` |
+| [7](#7-lora-adapters-for-c-and-d) | LoRA adapters for C and D, four variants | 15-40 min per adapter | `sft-data`, `train`, `dev-variant` | the chosen adapter paths in `configs/systems.yaml` |
+| [8](#8-gold-set-generation-for-a-b-c-d-and-r) | Gold-set generation for A, B, C, D and R; gold references | 1-2 h; teacher time | `gold-runs`, `annotate` | nothing yet |
+| [9](#9-automatic-metrics) | Automatic metrics and the GEE comparison | 2 min; 30 min for GEE | `metrics`, `gee` | `eval/results/metrics_gold-*.md`, `.json`, `gee_comparison.*` |
+| [10](#10-rating-sheets-and-ratings) | Rating sheets and ratings | seconds; 8-10 h teacher time | `rating-sheets`, `annotate`, `human-eval` | `eval/results/human_eval_*` |
+| [11](#11-agreement-and-the-llm-judge) | Agreement and the LLM judge | 30 min | `judge-check`, `judge`, `agreement` | `eval/results/agreement_*.md`, `human_eval_llm_judge*` |
+| [12](#12-correction-f05) | Correction F0.5 of the end-to-end pipeline | 15-30 min | `correction-eval` | `eval/results/correction_*.md`, `.json` |
+| [13](#13-analysis-assets) | Analysis assets and the run registry | minutes | `report-assets`, `runs` | report tables and figures, `eval/results/runs.md` |
+| [14](#14-demo-and-hugging-face-space) | Demo and Hugging Face Space | 1 h | `demo` | nothing (the Space is its own repository) |
+| [15](#15-release-checklist) | Release checklist and tag v1.0 | 2-4 h | | cards, README, report, tag |
 
 ## 1. Environment
 
@@ -58,7 +91,7 @@ pip install -e ".[train,graph,generate,data,demo,dev]"
 python -m spacy download en_core_web_sm
 ```
 
-Check the GPU build, then the code:
+Check the GPU build, then the code (`make env-check`, then `make lint test smoke`):
 
 ```bash
 python -c "import torch; print(torch.__version__, torch.cuda.get_device_capability(), 'sm_120' in torch.cuda.get_arch_list())"
@@ -101,14 +134,25 @@ matches them exactly:
 git diff --exit-code data/splits eval/results/data_stats.md
 ```
 
+`make data` runs the build and this check (the download stays a separate step, so that
+the licence is read first).
+
 *Committed:* nothing new. *Local:* `data/raw/`, `data/processed/edits.jsonl`.
 
 ## 3. Grammar graph
 
 The graph grounds systems B, D and R, and the teacher's silver data, so its content
 must be complete before step 5. [grammar_graph/README.md](../grammar_graph/README.md)
-describes the files and how to add or edit a concept. Write the rules, examples and
-terms of every concept, have them checked, and set `status: reviewed`. Then:
+describes the files and how to add or edit a concept. Example edits from the training
+essays show which errors each concept has to explain (`outputs/concept_examples/`; see
+the [annotation guide](annotation_guide.md#writing-the-grammar-graph)):
+
+```bash
+python scripts/concept_examples.py --n 10
+```
+
+Write the rules, examples and terms of every concept, have them checked, and set
+`status: reviewed`. Then (`make graph-check`):
 
 ```bash
 python -m explain_to_learn.graph validate --strict
@@ -116,8 +160,9 @@ python scripts/draw_graph.py
 python scripts/export_rdf.py
 ```
 
-`validate --strict` must report no errors. The reasons behind the main design choices
-are recorded in [design_decisions.md](design_decisions.md).
+`validate --strict` must report no errors (`make graph-check STRICT=` checks a draft
+graph without `--strict`). The reasons behind the main design choices are recorded in
+[design_decisions.md](design_decisions.md).
 
 *Committed:* `grammar_graph/`, `report/figures/grammar_graph.png`,
 `report/grammar_graph.ttl`.
@@ -142,12 +187,17 @@ python scripts/run_system.py --system B --run dev-explain --ids outputs/dev_ids.
 python scripts/compute_metrics.py --run dev-explain --ids outputs/dev_ids.txt --systems A B --compare B:A
 ```
 
-The `--limit 20` run is a smoke test; the full run resumes after it. Look at a few
+The `--limit 20` run is a quick check; the full run resumes after it. Look at a few
 replies in `outputs/A/dev-explain.jsonl`: `parsed` should be filled for nearly every
 edit. Repeat with `--mode hint` and `--run dev-hint` for hint mode.
 
+`make baselines` draws the sample and runs both systems and the metrics;
+`make baselines RUN_ARGS="--limit 20"` is the quick check and `make baselines MODE=hint`
+the hint run.
+
 A server is faster for long runs. Start the base model in Docker on port 8000 and add
-`--workers 16` after switching A and B to `backend: openai` in `configs/systems.yaml`:
+`--workers 16` (`WORKERS=16`) after switching A and B to `backend: openai` in
+`configs/systems.yaml`:
 
 ```bash
 bash scripts/serve_model.sh Qwen/Qwen3-4B-Instruct-2507
@@ -160,7 +210,7 @@ bash scripts/serve_model.sh Qwen/Qwen3-4B-Instruct-2507
 
 Serve the teacher model (system R, gpt-oss-20b) on port 8001, as `configs/systems.yaml`
 expects. vLLM takes 90% of the GPU memory by default, so stop any process that holds a
-model on the GPU first. In a second terminal:
+model on the GPU first. In a second terminal (`make serve-teacher`):
 
 ```bash
 PORT=8001 bash scripts/serve_model.sh openai/gpt-oss-20b
@@ -176,7 +226,8 @@ the gold set and error types without a graph concept:
 python scripts/make_silver.py generate --n 8000 --workers 16
 ```
 
-The run appends to `outputs/silver/teacher.jsonl` and resumes if it stops.
+The run appends to `outputs/silver/teacher.jsonl` and resumes if it stops. `make silver`
+runs it (`N_SILVER` sets the number of edits) and then the filter of step 6.
 
 *Committed:* nothing yet. *Local:* `outputs/silver/teacher.jsonl`.
 
@@ -191,14 +242,15 @@ writes `outputs/silver/kept.jsonl`, the counts in `eval/results/silver_filter.md
 `.json`, and 200 random kept items to `outputs/silver_handcheck.csv`.
 
 *Teacher time:* mark every item correct or not in the annotation app, judging the rule,
-the located words and the level ([annotation guide](annotation_guide.md#d-silver-hand-check)):
+the located words and the level ([annotation guide](annotation_guide.md#d-silver-hand-check);
+`make annotate` starts every task):
 
 ```bash
 python -m explain_to_learn.annotation --task silver
 ```
 
 The app saves the marks to `outputs/annotations/silver_handcheck.csv`, not to the
-sample file, which the filter rewrites each time it runs. Then:
+sample file, which the filter rewrites each time it runs. Then (`make silver-score`):
 
 ```bash
 python scripts/make_silver.py score --handcheck outputs/annotations/silver_handcheck.csv
@@ -216,13 +268,15 @@ and repeat steps 5 and 6 before training.
 
 Stop the teacher server (Ctrl+C in its terminal), so that training has the whole GPU.
 Build the SFT examples: one set per system, the same edits and targets, with the graph
-snippet in D's prompts only:
+snippet in D's prompts only (`make sft-data`):
 
 ```bash
 python -m explain_to_learn.train_data --silver outputs/silver/kept.jsonl --edits data/processed/edits.jsonl --out outputs/sft
 ```
 
-Check memory and speed with a short run, then train the main variant for both systems:
+Check memory and speed with a short run, then train the main variant for both systems
+(`make train TRAIN_ARGS="--max-steps 20 --run-name d-r16-check"`, `make train SYSTEM=C`,
+`make train SYSTEM=D`):
 
 ```bash
 python train/train_lora.py --variant r16 --system d --max-steps 20 --run-name d-r16-check
@@ -237,11 +291,12 @@ for variant in r8 r32 qlora_r16; do for system in c d; do python train/train_lor
 ```
 
 Each adapter is saved to `outputs/adapters/<system>-<variant>/` with `run_info.json`
-(settings, losses, peak memory, time, versions). To train in Docker instead, use the
-`docker run` command in [gpu_setup.md](gpu_setup.md#build-and-run) with the same
-arguments.
+(date, git commit, settings, losses, peak memory, time, versions); `make runs` adds it to
+the run registry. To train in Docker instead, use the `docker run` command in
+[gpu_setup.md](gpu_setup.md#build-and-run) with the same arguments.
 
-Compare the variants on the dev sample, never on the gold set:
+Compare the variants on the dev sample, never on the gold set (`make dev-variant
+VARIANT=r8` for one variant):
 
 ```bash
 for variant in r16 r8 r32 qlora_r16; do for system in C D; do python scripts/run_system.py --system "$system" --adapter "outputs/adapters/${system,,}-$variant" --run "dev-explain-$variant" --ids outputs/dev_ids.txt; done; python scripts/compute_metrics.py --run "dev-explain-$variant" --ids outputs/dev_ids.txt --systems C D --compare D:C; done
@@ -258,13 +313,15 @@ path in `configs/systems.yaml` if another variant is chosen. *Local:* `outputs/s
 ## 8. Gold-set generation for A, B, C, D and R
 
 Run every system on the 300 gold edits, in both modes. A to D load their model in the
-process, so run them while no server holds the GPU:
+process, so run them while no server holds the GPU (`make gold-runs` and
+`make gold-runs MODE=hint`):
 
 ```bash
 for system in A B C D; do for mode in explain hint; do python scripts/run_system.py --system "$system" --run "gold-$mode" --mode "$mode"; done; done
 ```
 
-Then start the teacher server again (step 5) and run R:
+Then start the teacher server again (step 5) and run R (`make gold-runs SYSTEMS=R
+WORKERS=16`, with `MODE=hint` for hints):
 
 ```bash
 for mode in explain hint; do python scripts/run_system.py --system R --run "gold-$mode" --mode "$mode" --workers 16; done
@@ -273,7 +330,18 @@ for mode in explain hint; do python scripts/run_system.py --system R --run "gold
 Every run reads `data/splits/gold_edit_ids.txt` and writes
 `outputs/<system>/gold-<mode>.jsonl`.
 
-*Committed:* nothing yet. *Local:* `outputs/{A,B,C,D,R}/gold-*.jsonl`.
+### Gold reference explanations
+
+*Teacher time:* write a reference explanation and hint for each gold edit in the
+annotation app, starting from system R's drafts, which are not in the blind rating
+sheet ([annotation guide](annotation_guide.md#a-gold-explanations)):
+
+```bash
+python -m explain_to_learn.annotation --task gold --drafts outputs/R/gold-explain.jsonl --drafts outputs/R/gold-hint.jsonl
+```
+
+*Committed:* nothing yet. *Local:* `outputs/{A,B,C,D,R}/gold-*.jsonl`,
+`outputs/annotations/gold_explanations.jsonl`.
 
 ## 9. Automatic metrics
 
@@ -282,17 +350,38 @@ python scripts/compute_metrics.py --run gold-explain --systems A B C D R
 python scripts/compute_metrics.py --run gold-hint --mode hint --systems A B C D R
 ```
 
-Each writes coverage, concept accuracy, faithfulness, length fit and off-level terms per
-system, by CEFR level and by error category, and paired bootstrap intervals for B-A,
-C-A, D-B and D-C (10,000 resamples).
+`make metrics` and `make metrics MODE=hint` run the same. Each writes coverage, concept
+accuracy, faithfulness, length fit and off-level terms per system, by CEFR level and by
+error category, and paired bootstrap intervals for B-A, C-A, D-B and D-C (10,000
+resamples).
+
+### Comparison with GEE
+
+GEE's English explanations (Song et al., 2024) explain W&I+LOCNESS dev edits, so the
+systems can explain the same edits and both can be scored for coverage and faithfulness
+(see [design_decisions.md](design_decisions.md#12-comparing-with-gee)). Pair GEE's edits
+with the edit table, run each system on them (A to D without a server, R with the
+teacher server) and compare:
+
+```bash
+python scripts/evaluate_on_gee.py prepare
+for system in A B C D; do python scripts/evaluate_on_gee.py run --system "$system"; done
+python scripts/evaluate_on_gee.py run --system R --workers 16
+python scripts/evaluate_on_gee.py compare --systems A B C D R
+```
+
+`make gee` runs the systems in `SYSTEMS` (A to D) and the comparison; `make gee
+SYSTEMS=R WORKERS=16` adds R. The comparison skips systems without outputs.
 
 *Committed:* `eval/results/metrics_gold-explain.md`, `.json`, `metrics_gold-hint.md`,
-`.json`.
+`.json`, `gee_comparison.md`, `.json`. *Local:* `outputs/gee/` (GEE's data has no
+licence file and is not redistributed).
 
 ## 10. Rating sheets and ratings
 
 Make the blind sheets: 100 gold edits x systems A to D = 400 items, shuffled with the
-system names hidden, a 50-item subset for the second rater, and the key:
+system names hidden, a 50-item subset for the second rater, and the key
+(`make rating-sheets`):
 
 ```bash
 python scripts/make_rating_sheet.py --system A=outputs/A/gold-explain.jsonl --system B=outputs/B/gold-explain.jsonl --system C=outputs/C/gold-explain.jsonl --system D=outputs/D/gold-explain.jsonl
@@ -314,16 +403,32 @@ python -m explain_to_learn.annotation --task ratings
 
 The second rater rates the 50-item sheet on their own computer
 ([annotation guide](annotation_guide.md#c-second-rater)) and sends back
-`ratings_<their name>.csv`; save it in `outputs/annotations/` as `ratings_rater2.csv`.
+`ratings_<their name>.csv`; save it in `outputs/annotations/` as `ratings_rater2.csv`
+(or set `RATER2=<their name>` for `make agreement`).
 
-Summarise the main rater's ratings per system, error category and level:
+Summarise the main rater's ratings per system, error category and level
+(`make human-eval`):
 
 ```bash
 python -m explain_to_learn.human_eval --ratings outputs/annotations/ratings_rater1.csv --key outputs/human_eval/key.csv --out-dir eval/results --name human_eval_rater1
 ```
 
+### Optional: preference pairs and DPO
+
+The teacher chooses the better of two outputs for the same edit in the app's preference
+task ([annotation guide](annotation_guide.md#e-preference-pairs)). The two run files
+must cover training edits, never the dev or gold edits used for evaluation. The choices
+become DPO pairs (`make dpo-data`), and DPO continues training the system D adapter on
+them (`make dpo`; see [design_decisions.md](design_decisions.md#13-preference-tuning-with-dpo)):
+
+```bash
+python -m explain_to_learn.annotation --task preferences --pair <name>=<run file> --pair <name>=<run file>
+python -m explain_to_learn.preference
+python train/train_dpo.py --variant beta01
+```
+
 *Committed:* `eval/results/human_eval_rater1.md` and its `_by_*.csv` tables.
-*Local:* `outputs/human_eval/`, `outputs/annotations/`.
+*Local:* `outputs/human_eval/`, `outputs/annotations/`, `outputs/dpo/`.
 
 ## 11. Agreement and the LLM judge
 
@@ -336,14 +441,15 @@ python scripts/agreement.py --first outputs/annotations/ratings_rater1.csv --sec
 
 The LLM judge rates the same sheet with the rubric as its instructions. With the
 teacher server on port 8001 as the judge, allow room for its reasoning and check 20
-items first:
+items first (`make judge-check`):
 
 ```bash
 python scripts/llm_judge.py --model openai/gpt-oss-20b --base-url http://localhost:8001/v1 --max-tokens 2048 --limit 20 --out outputs/human_eval/ratings_llm_judge_check.csv
 ```
 
 `outputs/human_eval/ratings_llm_judge_check.json` must show `"failed": 0`. Then rate
-all items and compare the judge with the main rater:
+all items and compare the judge with the main rater (`make judge`, then
+`make agreement`, which also writes the raters' table above):
 
 ```bash
 python scripts/llm_judge.py --model openai/gpt-oss-20b --base-url http://localhost:8001/v1 --max-tokens 2048
@@ -362,14 +468,16 @@ python -m explain_to_learn.human_eval --ratings outputs/human_eval/ratings_llm_j
 The main evaluation uses gold corrections. The end-to-end pipeline adds a correction
 step, scored here on all W&I+LOCNESS dev sentences against the official dev M2 files
 (span-based correction F0.5 with ERRANT, overall and per CEFR level). The GEC model runs
-in the process:
+in the process (`make correction-eval RUN_ARGS="--limit 50"`, then
+`make correction-eval`):
 
 ```bash
 python scripts/evaluate_correction.py --run gec-t5-small --corrector gec --limit 50
 python scripts/evaluate_correction.py --run gec-t5-small --corrector gec
 ```
 
-The prompted alternative uses the base model on the server of port 8000:
+The prompted alternative uses the base model on the server of port 8000
+(`make correction-eval CORRECTOR=llm CORRECTION_RUN=qwen3-4b-prompted`):
 
 ```bash
 bash scripts/serve_model.sh Qwen/Qwen3-4B-Instruct-2507
@@ -379,7 +487,7 @@ bash scripts/serve_model.sh Qwen/Qwen3-4B-Instruct-2507
 python scripts/evaluate_correction.py --run qwen3-4b-prompted --corrector llm
 ```
 
-The `--limit 50` run is a smoke test; the full run continues from its 50 corrected
+The `--limit 50` run is a quick check; the full run continues from its 50 corrected
 sentences and replaces its result files. Hypotheses and M2 files go to
 `outputs/correction/<run>/`, and a stopped run resumes.
 
@@ -388,24 +496,45 @@ sentences and replaces its result files. Hypotheses and M2 files go to
 
 ## 13. Analysis assets
 
-`scripts/make_report_assets.py` and the notebooks in `notebooks/` turn the result files
-of steps 4 to 12 into the report's tables and figures (see the script's `--help` for its
-options). The per-level and per-category breakdowns and the paired bootstrap intervals
-are already in the `metrics_gold-*.json` files.
+`scripts/make_report_assets.py` turns the edit table and the result files of steps 4 to
+12 into the report's tables and figures: data figures from the edit table, then the
+README results table, the LaTeX tables and the result figures for a metrics run
+(`make report-assets`, with `RUN=gold-hint` for hint mode):
 
-*Committed:* the generated tables and figures under `report/`.
+```bash
+python scripts/make_report_assets.py data
+python scripts/make_report_assets.py results --run gold-explain
+```
+
+The notebooks in `notebooks/` show the same results interactively. The per-level and
+per-category breakdowns and the paired bootstrap intervals are already in the
+`metrics_gold-*.json` files. Update the run registry last (`make runs`):
+
+```bash
+python scripts/collect_runs.py
+```
+
+*Committed:* the generated tables and figures under `report/`,
+`eval/results/results_table.md`, `eval/results/runs.md`.
 
 ## 14. Demo and Hugging Face Space
 
-Try the pipeline from the command line, then in the demo:
+Try the pipeline from the command line, then in the demo (`make demo`):
 
 ```bash
 explain-to-learn explain "She don't like to going to school." --level A2 --mode hint
 python demo/app.py
 ```
 
-`python demo/app.py --fake` starts the interface without models. Push the chosen D
-adapter to the Hub, private until release:
+`python demo/app.py --fake` (`make demo DEMO_ARGS=--fake`) starts the interface without
+models. The teacher summary of an essay of the edit table needs no model; its key is the
+corpus and essay ID, such as `wi-1-352420`:
+
+```bash
+explain-to-learn summary --essay <essay key> --edits data/processed/edits.jsonl
+```
+
+Push the chosen D adapter to the Hub, private until release:
 
 ```bash
 hf upload <user>/explain-to-learn-d-r16 outputs/adapters/d-r16 . --private
@@ -420,6 +549,8 @@ the Space.
 
 - [ ] All result files of steps 4 to 12 are committed, and `git ls-files data/raw
       data/processed outputs` prints nothing.
+- [ ] `eval/results/runs.md` lists every run (`make runs`), and `make lint test smoke`
+      passes.
 - [ ] [MODEL_CARD.md](../MODEL_CARD.md): training data sizes, hand-check accuracy,
       training time and peak memory (from `run_info.json`), results, and the chosen
       variant. Upload it as the adapter repositories' `README.md`.
