@@ -26,6 +26,7 @@ import hashlib
 import importlib.util
 import json
 import os
+import re
 import shlex
 import shutil
 import subprocess
@@ -605,6 +606,19 @@ def test_make_targets_rerun_the_steps(runbook: Runbook):
     finally:
         for link in links:
             link.unlink()
+
+
+def test_runbook_names_existing_scripts_modules_and_targets():
+    """Every script, module and make target that docs/experiments.md names exists."""
+    runbook = (ROOT / "docs" / "experiments.md").read_text(encoding="utf-8")
+    for path in set(re.findall(r"\b((?:scripts|train|demo)/[\w./-]+\.(?:py|sh))\b", runbook)):
+        assert (ROOT / path).is_file(), f"the runbook names {path}, which does not exist"
+    for module in set(re.findall(r"python -m (explain_to_learn[\w.]*)", runbook)):
+        assert importlib.util.find_spec(module), f"the runbook names module {module}"
+    if shutil.which("make"):
+        targets = set(make_targets())
+        for target in set(re.findall(r"`make ([a-z][a-z-]*)", runbook)) - {"help"}:
+            assert target in targets, f"the runbook names make {target}, which does not exist"
 
 
 def test_learner_text_stays_in_private_folders(runbook: Runbook):
