@@ -23,9 +23,9 @@ The code has four parts:
 - **The package** (`src/explain_to_learn/`) holds all the logic that more than one
   entry point needs: the edit table, the grammar graph, prompts, generation, metrics,
   silver-data filtering, training data, human-evaluation summaries, the end-to-end
-  pipeline and the local annotation app. It is installed with `pip install -e .`, and
-  each heavy dependency comes with an optional extra (`data`, `graph`, `generate`,
-  `model`, `demo`, `analysis`, `train`).
+  pipeline and the local annotation app. It is installed with `pip install -e .` (or
+  `pip install -r requirements.txt`), and each heavy dependency comes with an optional
+  extra (`data`, `graph`, `generate`, `model`, `demo`, `analysis`, `train`).
 - **The scripts** (`scripts/`) are the command-line steps of the experiments, one per
   step. Each reads files, calls package functions and writes files; only the report's
   tables and figures are drawn by code that lives in a script
@@ -565,7 +565,9 @@ explain each value.
   (`PORT`, `VLLM_IMAGE`, `MAX_MODEL_LEN`, `GPU_MEMORY_UTILIZATION`, `MAX_LORA_RANK`,
   `HF_CACHE`).
 - `pyproject.toml` defines the extras, the `explain-to-learn` command, the Ruff rules
-  and the test paths.
+  and the test paths. `requirements.txt` installs the package with every extra except
+  the GPU stack, and `requirements-gpu.txt` installs PyTorch for CUDA 13.0 with the
+  training extras; neither pins versions of its own beyond PyTorch.
 
 ## Randomness and seeds
 
