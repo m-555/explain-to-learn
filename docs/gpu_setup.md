@@ -88,6 +88,9 @@ pip install torch==2.14.1 --index-url https://download.pytorch.org/whl/cu130
 pip install -e ".[train,graph,generate,dev]"
 ```
 
+The last two `pip install` lines can be replaced by one, which also adds the `data`
+extra (ERRANT and spaCy): `pip install -r requirements-gpu.txt`.
+
 `build-essential` provides the C compiler that Triton uses to build its GPU kernels on
 first use. Installing the training extras keeps the installed PyTorch build, because
 the pinned libraries accept 2.14.1. Confirm that `pip show torch` still reports

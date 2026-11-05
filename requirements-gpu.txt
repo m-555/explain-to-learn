@@ -1,0 +1,11 @@
+# GPU environment: LoRA and DPO training and local model runs on an NVIDIA RTX 5090
+# (Blackwell, sm_120), in WSL2 Ubuntu 24.04 with Python 3.12 (see docs/gpu_setup.md).
+# PyTorch comes from the CUDA 13.0 index; the `train` extra pins the library versions
+# that were checked together for Blackwell support.
+#
+# Run from the repository root:
+#   pip install -r requirements-gpu.txt
+#   python -m spacy download en_core_web_sm
+--extra-index-url https://download.pytorch.org/whl/cu130
+torch==2.14.1+cu130
+-e .[train,graph,generate,data,dev]

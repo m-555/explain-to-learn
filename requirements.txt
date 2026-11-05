@@ -1,0 +1,10 @@
+# Everyday environment: tests, grammar graph, generation against a model server,
+# ERRANT, the demo, the annotation app and the report figures. No GPU stack.
+# Package versions live in pyproject.toml; this file only selects its extras.
+#
+# Run from the repository root:
+#   pip install -r requirements.txt
+#   python -m spacy download en_core_web_sm
+#
+# For training and local model runs on the GPU, use requirements-gpu.txt instead.
+-e .[dev,graph,generate,data,demo,analysis]

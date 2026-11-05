@@ -58,6 +58,8 @@ python -m venv .venv && source .venv/bin/activate
 pip install -e ".[dev,graph,generate,demo]"
 ```
 
+To install every extra except the GPU stack (adding ERRANT and the report tools), use `pip install -r requirements.txt` instead. `requirements-gpu.txt` sets up the training environment on the GPU in one step.
+
 Download the corpora into `data/raw/` (git-ignored). The script prints the licence terms and only downloads with the flag:
 
 ```bash
