@@ -12,9 +12,8 @@ import argparse
 from collections import Counter
 from pathlib import Path
 
-from explain_to_learn.edits import Edit, read_jsonl
+from explain_to_learn.edits import LEVELS, Edit, read_jsonl
 
-LEVELS = ["A1", "A2", "B1", "B2", "C1", "C2", "native"]
 SPLITS = ["train", "dev", "test"]
 TOP_N = 15
 

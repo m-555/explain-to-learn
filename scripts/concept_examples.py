@@ -26,12 +26,11 @@ from collections import Counter, defaultdict
 from collections.abc import Iterable
 from pathlib import Path
 
-from explain_to_learn.edits import Edit, read_jsonl
+from explain_to_learn.edits import LEVELS, Edit, read_jsonl
 from explain_to_learn.graph import OPERATIONS, GrammarGraph
 from explain_to_learn.io import open_graph, read_ids
 from explain_to_learn.prompts import mark_edit
 
-LEVELS = ("A1", "A2", "B1", "B2", "C1", "C2", "native")
 NOTE = (
     "> **Do not copy these sentences into `grammar_graph/concepts.yaml`.** They are learner\n"
     "> sentences from the training split, shown only so you can see which errors this\n"

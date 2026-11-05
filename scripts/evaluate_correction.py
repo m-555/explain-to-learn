@@ -35,13 +35,12 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
 
-from explain_to_learn.edits import CORPUS_FILES, align_essays, parse_m2, read_essays
+from explain_to_learn.edits import CORPUS_FILES, LEVELS, align_essays, parse_m2, read_essays
 from explain_to_learn.metrics import errant_compare, errant_parallel
 from explain_to_learn.pipeline import Corrector, load_correctors, make_corrector
 from explain_to_learn.prompts import detokenize
 from explain_to_learn.splits import GOLD_CORPORA
 
-LEVELS = ("A1", "A2", "B1", "B2", "C1", "C2", "native")
 CHUNK = 64
 
 

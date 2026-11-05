@@ -114,6 +114,8 @@ CORPUS_FILES = [
 ]
 
 FCE_LEVEL = "B2"
+# Every value of `cefr_level` in the edit table, in level order (`native` is LOCNESS).
+LEVELS = ("A1", "A2", "B1", "B2", "C1", "C2", "native")
 SKIPPED_TYPES = {"noop", "UNK"}
 
 
