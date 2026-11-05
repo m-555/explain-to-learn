@@ -10,7 +10,7 @@
 # D before DPO), so the model learns the preference without drifting far from D.
 
 defaults:
-  seed: 42                          # Seeds data order and the train/validation split.
+  seed: 42                          # Seeds data order; preference.py --seed splits the pairs.
 
   model:
     name: Qwen/Qwen3-4B-Instruct-2507  # The base model of system D, loaded in bf16.
