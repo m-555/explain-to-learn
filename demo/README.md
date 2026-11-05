@@ -130,6 +130,11 @@ graph, the systems config, and the adapter on the Hugging Face Hub.
 `requirements.txt` installs this package from GitHub at `main`. Pin it to a release tag
 or commit, so the Space keeps working when the repository changes.
 
+Steps 3, 4 and 6 can be automated: `scripts/sync_space.py` stages exactly these files,
+uses [space_card.md](space_card.md) as the Space's `README.md`, pins the package to the
+given tag or commit, and uploads them. The Sync demo Space workflow runs it after every
+release or by hand ([docs/release.md](../docs/release.md), step 5).
+
 ### CPU or ZeroGPU
 
 | | CPU basic | ZeroGPU |

@@ -369,6 +369,17 @@ set (`outputs/dev_ids.txt`) that the baselines run on. Depends on `edits` and `i
 and every metrics and correction result into `eval/results/runs.md` (training runs,
 evaluation runs and correction runs; no learner text). Depends on `io`.
 
+**`select_showcase_examples.py`** proposes candidates for the README's five good and
+five bad outputs from the first rater's blind ratings, the key and the rating sheet:
+W&I edits only, each with a short window of context, spread over error categories, and
+system D next to system A for the same edit. Writes `outputs/showcase_candidates.md`.
+Depends on `edits`, `human_eval`, `io` and `prompts`.
+
+**`sync_space.py`** stages the files the demo Space needs (the app, its stubs and
+requirements, `demo/space_card.md` as the Space's README, the grammar graph and
+`configs/systems.yaml`), pins the package requirement to a release tag or commit, and
+uploads them with `huggingface_hub`. Uses only the standard library otherwise.
+
 ### Training: `train/`
 
 **`train_lora.py`** trains one LoRA adapter for system C or D on the examples from
@@ -419,6 +430,9 @@ and `prompts`.
   corpus in the BEA-2019 format against a fake OpenAI-compatible server (`pytest -m
   smoke`, or `make smoke`); it is left out of the default run and has its own CI job.
 - `Makefile`: one target per runbook step (`make help` lists them), run inside WSL2.
+- `.github/workflows/`: CI (`ci.yml`), the smoke test (`smoke.yml`), report
+  compilation (`report.yml`), the GitHub release on a version tag (`release.yml`) and the
+  demo Space upload (`space-sync.yml`); see [release.md](release.md).
 
 ## Intermediate files
 
@@ -484,6 +498,7 @@ people read the file, not code.
 | `eval/results/human_eval_<name>.md`, `_by_{system,category,level}.csv` | `human_eval.py` | – | Item counts, mean ratings and the invented-rule share per group | Committed |
 | `eval/results/agreement_<name>.md` | `agreement.py` (`--out`) | `make_report_assets.py results` | Items, exact agreement, Cohen's kappa and weighted kappa per dimension | Committed |
 | `outputs/annotations/gold_explanations.jsonl` | the gold task | – (the reference set) | `edit_id`, `level`, `error_type`, `concept_id`, `concept`, `explanation`, `hint`, `not_rule_explainable`, `notes`, `from_draft` | Local |
+| `outputs/showcase_candidates.md` | `select_showcase_examples.py` | the author, for the README | Good and bad candidates with a short window of context, the output, its ratings and an empty comment field | Local |
 | `outputs/annotations/preferences.jsonl` | the preference task | `preference.py` | `edit_id`, `level`, `mode`, `prompt_messages`, `chosen`, `rejected`, `source_systems`, `judgement` | Local |
 | `outputs/dpo/{train,validation}.jsonl` | `preference.py` | `train_dpo.py` | `edit_id`, `essay_key`, `level`, `mode`, `source_systems`, `prompt`, `chosen`, `rejected` | Local |
 

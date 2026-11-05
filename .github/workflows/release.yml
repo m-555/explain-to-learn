@@ -1,0 +1,55 @@
+name: Release
+
+# On a pushed version tag (v1.0.0, ...): run the checks, compile the report, and publish
+# a GitHub release with the report PDF and the CHANGELOG.md section for that version as
+# its notes. See docs/release.md.
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.11"
+          cache: pip
+      - name: Install
+        run: pip install -e ".[dev,graph,generate]"
+      - name: Lint and test
+        run: |
+          ruff check .
+          ruff format --check .
+          pytest -q
+      # The same compilation as .github/workflows/report.yml.
+      - name: Compile report/main.tex
+        uses: xu-cheng/latex-action@v4
+        with:
+          root_file: main.tex
+          working_directory: report
+      - name: Release notes from CHANGELOG.md
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          awk -v v="[$version]" '
+            /^## \[/ { keep = index($0, v) > 0; next }
+            /^\[[^]]+\]: / { next }
+            keep
+          ' CHANGELOG.md > release_notes.md
+          if ! grep -q '[^[:space:]]' release_notes.md; then
+            echo "CHANGELOG.md has no section for $version" >&2
+            exit 1
+          fi
+      - name: Publish the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          cp report/main.pdf explain-to-learn-report.pdf
+          gh release create "$GITHUB_REF_NAME" explain-to-learn-report.pdf \
+            --title "Explain-to-Learn $GITHUB_REF_NAME" \
+            --notes-file release_notes.md --verify-tag

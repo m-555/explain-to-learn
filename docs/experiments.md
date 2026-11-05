@@ -541,7 +541,8 @@ hf upload <user>/explain-to-learn-d-r16 outputs/adapters/d-r16 . --private
 ```
 
 Then follow [demo/README.md](../demo/README.md#deploy-to-a-hugging-face-space) to create
-the Space.
+the Space, or set up the Sync demo Space workflow once ([release.md](release.md), step 5)
+and let it upload the demo.
 
 *Committed:* nothing. The Space and the adapters are their own repositories on the Hub.
 
@@ -558,13 +559,13 @@ the Space.
       example counts, raters and agreement.
 - [ ] Report: fill `report/main.tex` and build it with `latexmk -pdf main.tex` in
       `report/`.
-- [ ] README: the demo link, the results table and example outputs (invented sentences
-      only), including negative results; tick the roadmap items that are done.
-- [ ] Make the adapter repositories and the Space public, and pin
-      `demo/requirements.txt` to the release tag.
-- [ ] Tag the release:
-
-      ```bash
-      git tag -a v1.0 -m "Explain-to-Learn v1.0"
-      git push origin v1.0
-      ```
+- [ ] README: the demo link, the results table and five good and five bad outputs with
+      a comment on each, including negative results; tick the roadmap items that are
+      done. `make showcase` proposes candidates from the blind ratings (W&I edits only,
+      each with a short window of context; see [licences.md](licences.md) for what may
+      be quoted).
+- [ ] Make the adapter repositories and the Space public.
+- [ ] Release: follow [release.md](release.md) (final checks for learner text and
+      secrets, version, [CHANGELOG.md](../CHANGELOG.md), tag `v1.0.0`). The Release
+      workflow publishes the report PDF, and the Sync demo Space workflow uploads the
+      demo pinned to the tag.

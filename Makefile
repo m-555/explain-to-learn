@@ -53,7 +53,7 @@ TRAIN_SYSTEM = $(shell echo $(SYSTEM) | tr '[:upper:]' '[:lower:]')
 .DEFAULT_GOAL := help
 .PHONY: help env-check data graph-check baselines serve-teacher silver silver-score \
 	annotate sft-data train dev-variant gold-runs metrics gee rating-sheets human-eval \
-	judge-check judge agreement correction-eval report-assets runs dpo-data dpo demo \
+	judge-check judge agreement correction-eval report-assets showcase runs dpo-data dpo demo \
 	smoke test lint
 
 help: ## List the targets and the variables
@@ -145,6 +145,9 @@ correction-eval: ## Step 12: correction F0.5 of CORRECTOR on W&I+LOCNESS dev
 report-assets: ## Step 13: report figures and tables from the edit table and results
 	$(PYTHON) scripts/make_report_assets.py data
 	$(PYTHON) scripts/make_report_assets.py results --run $(RUN)
+
+showcase: ## Step 13: candidates for the README's five good and five bad outputs
+	$(PYTHON) scripts/select_showcase_examples.py --ratings $(MARKS)/ratings_rater1.csv --key $(SHEETS)/key.csv --sheet $(SHEETS)/rating_sheet.csv
 
 runs: ## After each run: update the run registry eval/results/runs.md
 	$(PYTHON) scripts/collect_runs.py
