@@ -45,6 +45,7 @@ from typing import Any
 from explain_to_learn.edits import Edit, read_jsonl
 from explain_to_learn.gee import GEE_FILE, match_edits, read_gee, reference_row
 from explain_to_learn.human_eval import write_csv
+from explain_to_learn.io import read_ids, write_ids
 from explain_to_learn.metrics import faithfulness, paired_bootstrap, shown_text
 from explain_to_learn.prompts import detokenize, prompt_level
 from explain_to_learn.silver import wilson_interval
@@ -67,15 +68,10 @@ def prepare(args: argparse.Namespace) -> None:
     records, counts = read_gee(args.gee)
     matches, match_counts = match_edits(records, read_jsonl(args.edits))
     counts.update(match_counts)
-    gold = (
-        set(args.gold_ids.read_text(encoding="utf-8").split()) if args.gold_ids.is_file() else set()
-    )
+    gold = set(read_ids(args.gold_ids)) if args.gold_ids.is_file() else set()
     counts["matched edits in the gold set"] = sum(m.edit.edit_id in gold for m in matches)
 
-    args.gee_dir.mkdir(parents=True, exist_ok=True)
-    (args.gee_dir / "edit_ids.txt").write_text(
-        "".join(f"{m.edit.edit_id}\n" for m in matches), encoding="utf-8"
-    )
+    write_ids((m.edit.edit_id for m in matches), args.gee_dir / "edit_ids.txt")
     with (args.gee_dir / "references.jsonl").open("w", encoding="utf-8") as out:
         for match in matches:
             out.write(json.dumps(reference_row(match), ensure_ascii=False) + "\n")

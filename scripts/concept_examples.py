@@ -28,7 +28,7 @@ from pathlib import Path
 
 from explain_to_learn.edits import Edit, read_jsonl
 from explain_to_learn.graph import OPERATIONS, GrammarGraph
-from explain_to_learn.io import open_graph
+from explain_to_learn.io import open_graph, read_ids
 from explain_to_learn.prompts import mark_edit
 
 LEVELS = ("A1", "A2", "B1", "B2", "C1", "C2", "native")
@@ -198,7 +198,7 @@ def main(argv: list[str] | None = None) -> None:
     args = parser.parse_args(argv)
 
     graph = open_graph(args.graph)
-    train_essays = set(args.train_essays.read_text(encoding="utf-8").split())
+    train_essays = set(read_ids(args.train_essays))
     paths = write_concept_files(
         graph, read_jsonl(args.edits), train_essays, args.out, args.n, args.seed
     )

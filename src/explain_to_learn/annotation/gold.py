@@ -37,16 +37,10 @@ from explain_to_learn.annotation.store import Store
 from explain_to_learn.annotation.task import Task
 from explain_to_learn.edits import Edit, read_jsonl
 from explain_to_learn.generate import OUTPUT_FIELDS
-from explain_to_learn.io import open_graph
+from explain_to_learn.io import open_graph, read_ids
 from explain_to_learn.prompts import detokenize, prompt_level
 
 OUTPUT_FILE = "gold_explanations.jsonl"
-
-
-def read_ids(path: str | Path) -> list[str]:
-    """Edit IDs, one per line."""
-    lines = Path(path).read_text(encoding="utf-8").splitlines()
-    return [line.strip() for line in lines if line.strip()]
 
 
 def read_drafts(paths: Sequence[str | Path]) -> dict[str, dict[str, str]]:

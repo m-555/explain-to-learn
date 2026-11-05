@@ -26,12 +26,7 @@ from explain_to_learn.generate import (
     make_backend,
     run_batch,
 )
-from explain_to_learn.io import open_graph
-
-
-def read_ids(path: Path) -> list[str]:
-    """Edit IDs, one per line."""
-    return [line.strip() for line in path.read_text(encoding="utf-8").splitlines() if line.strip()]
+from explain_to_learn.io import open_graph, read_ids
 
 
 def main(argv: list[str] | None = None) -> None:

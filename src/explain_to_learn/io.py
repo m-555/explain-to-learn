@@ -1,15 +1,32 @@
 """File helpers shared by the package, the scripts, the annotation app and the demo.
 
+- ID files (`data/splits/*.txt`, `outputs/dev_ids.txt`): one edit ID or essay key per
+  line; `read_ids` and `write_ids`.
+
 `open_graph` loads the grammar graph from its folder.
 """
 
 from __future__ import annotations
 
+from collections.abc import Iterable
 from pathlib import Path
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from explain_to_learn.graph import GrammarGraph
+
+
+def read_ids(path: str | Path) -> list[str]:
+    """IDs from a text file with one ID per line, in file order; blank lines are skipped."""
+    lines = Path(path).read_text(encoding="utf-8").splitlines()
+    return [line.strip() for line in lines if line.strip()]
+
+
+def write_ids(ids: Iterable[str], path: str | Path) -> None:
+    """Write IDs to a text file, one per line, creating its folder."""
+    path = Path(path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text("".join(f"{i}\n" for i in ids), encoding="utf-8")
 
 
 def open_graph(directory: str | Path) -> GrammarGraph:

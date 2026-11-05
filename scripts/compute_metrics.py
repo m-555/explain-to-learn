@@ -21,7 +21,7 @@ import json
 from pathlib import Path
 
 from explain_to_learn.edits import read_jsonl
-from explain_to_learn.io import open_graph
+from explain_to_learn.io import open_graph, read_ids
 from explain_to_learn.metrics import (
     breakdown,
     correction_f05,
@@ -75,8 +75,7 @@ def score_system(outputs, edits, graph, terms, mode, contradiction_check=None) -
 def compute(args: argparse.Namespace, graph) -> dict:
     """All systems' summaries, breakdowns and paired comparisons."""
     all_edits = {edit.edit_id: edit for edit in read_jsonl(args.edits)}
-    ids = [line.strip() for line in args.ids.read_text().splitlines() if line.strip()]
-    edits = [all_edits[i] for i in ids]
+    edits = [all_edits[i] for i in read_ids(args.ids)]
     terms = load_terms(args.terms)
     check = nli_contradiction_check() if args.contradiction == "nli" else None
 

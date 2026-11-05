@@ -30,7 +30,7 @@ from explain_to_learn.generate import (
     make_backend,
     run_batch,
 )
-from explain_to_learn.io import open_graph
+from explain_to_learn.io import open_graph, read_ids
 from explain_to_learn.silver import (
     assign_modes,
     counts_table,
@@ -44,10 +44,6 @@ SILVER_DIR = Path("outputs/silver")
 RESULTS_DIR = Path("eval/results")
 
 
-def read_lines(path: Path) -> list[str]:
-    return [line.strip() for line in path.read_text(encoding="utf-8").splitlines() if line.strip()]
-
-
 def read_rows(path: Path) -> list[dict]:
     with path.open(encoding="utf-8") as lines:
         return [json.loads(line) for line in lines if line.strip()]
@@ -59,10 +55,10 @@ def generate(args: argparse.Namespace) -> None:
     edits = read_jsonl(args.edits)
     selected = select_training_edits(
         edits,
-        set(read_lines(args.train_essays)),
+        set(read_ids(args.train_essays)),
         n=args.n,
         seed=args.seed,
-        exclude_ids=read_lines(args.exclude) if args.exclude else (),
+        exclude_ids=read_ids(args.exclude) if args.exclude else (),
         has_concept=lambda error_type: graph.concept_for(error_type) is not None,
     )
     modes = assign_modes([e.edit_id for e in selected], args.hint_share, args.seed)

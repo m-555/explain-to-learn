@@ -22,6 +22,7 @@ from collections.abc import Iterable
 from pathlib import Path
 
 from explain_to_learn.edits import Edit, read_jsonl
+from explain_to_learn.io import write_ids
 
 GOLD_CORPORA = ("wi", "locness")
 GOLD_SEED = 2019
@@ -38,13 +39,6 @@ def essay_splits(edits: Iterable[Edit]) -> dict[str, set[str]]:
     for essay, split in split_of.items():
         splits[split].add(essay)
     return dict(splits)
-
-
-def write_ids(ids: Iterable[str], path: str | Path) -> None:
-    """Write IDs to a text file, one per line."""
-    path = Path(path)
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text("".join(f"{i}\n" for i in ids), encoding="utf-8")
 
 
 def write_split_files(edits: Iterable[Edit], out_dir: str | Path) -> dict[str, set[str]]:

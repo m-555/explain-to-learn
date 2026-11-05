@@ -30,6 +30,7 @@ from typing import Any
 
 from explain_to_learn.edits import Edit, read_jsonl
 from explain_to_learn.human_eval import KEY_COLUMNS, RATING_COLUMNS, SHEET_COLUMNS, write_csv
+from explain_to_learn.io import read_ids
 from explain_to_learn.metrics import shown_text
 from explain_to_learn.prompts import detokenize, prompt_level
 
@@ -128,7 +129,7 @@ def main() -> None:
     if existing and not args.force:
         parser.error(f"{', '.join(existing)} already exist; use --force to overwrite")
 
-    gold_ids = args.gold_ids.read_text(encoding="utf-8").split()
+    gold_ids = read_ids(args.gold_ids)
     edits = {edit.edit_id: edit for edit in read_jsonl(args.edits)}
     outputs = {name: read_outputs(path) for name, path in args.system}
     sheet, second, key = make_sheets(
