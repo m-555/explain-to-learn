@@ -472,7 +472,7 @@ def results_rows(
 def format_estimate(estimate: Estimate | None, percent: bool, latex: bool = False) -> str:
     """`85.3 (81.0–89.3)` for a share in percent, `1.62 (1.48–1.75)` for a rating."""
     if estimate is None or estimate.value is None:
-        return "–"
+        return "--" if latex else "–"
     if percent:
         estimate = estimate.scaled(100)
     digits = 1 if percent else 2
@@ -486,9 +486,9 @@ def format_estimate(estimate: Estimate | None, percent: bool, latex: bool = Fals
 
 
 def format_difference(estimate: Estimate, percent: bool, latex: bool = False) -> str:
-    """A signed difference with its interval, e.g. `+3.2 (-1.0, 7.5)`."""
+    """A signed difference with its interval, e.g. `+3.2 [-1.0, 7.5]`."""
     if estimate.value is None:
-        return "–"
+        return "--" if latex else "–"
     if percent:
         estimate = estimate.scaled(100)
     digits = 1 if percent else 2
@@ -543,8 +543,13 @@ def latex_table(
     label: str,
     breaks: Sequence[int] = (),
     wide: bool = True,
+    top: Sequence[str] = (),
 ) -> str:
-    """A booktabs table; `breaks` are body row indices that get a `\\midrule` before them."""
+    """A booktabs table.
+
+    `breaks` are body row indices that get a `\\midrule` before them, and `top` holds
+    LaTeX lines placed above the header, such as column group titles.
+    """
     environment = "table*" if wide else "table"
     lines = [
         f"\\begin{{{environment}}}[t]",
@@ -552,6 +557,7 @@ def latex_table(
         "\\small",
         "\\begin{tabular}{l" + "r" * (len(header) - 1) + "}",
         "\\toprule",
+        *top,
         " & ".join(header) + " \\\\",
         "\\midrule",
     ]
@@ -588,11 +594,11 @@ def difference_rows(
     if metrics:
         comparisons = metrics.get("comparisons", {})
         for key, label, _ in AUTOMATIC:
-            cells = {
-                f"{a}-{b}": difference_estimate(comparisons[f"{a} - {b}"][key])
-                for a, b in COMPARISONS
-                if key in comparisons.get(f"{a} - {b}", {})
-            }
+            cells = {}
+            for a, b in COMPARISONS:
+                result = comparisons.get(f"{a} - {b}", {}).get(key)
+                if result and result["diff"] is not None:
+                    cells[f"{a}-{b}"] = difference_estimate(result)
             if cells:
                 rows.append(Row(f"{label} (pp)", "automatic", True, cells))
     if human:
@@ -640,10 +646,10 @@ def latex_agreement(agreement: dict[str, dict[str, dict[str, float | None]]]) ->
     def number(value: float | None, digits: int = 2) -> str:
         return "--" if value is None else f"{value:.{digits}f}".replace("-", "$-$")
 
-    header = ["Dimension"]
-    for source in agreement:
-        name = AGREEMENT_SOURCES[source]
-        header += [f"{name}: items", "exact", "$\\kappa$", "$\\kappa_w$"]
+    header = ["Dimension"] + ["Items", "Exact", "$\\kappa$", "$\\kappa_w$"] * len(agreement)
+    titles = [f"\\multicolumn{{4}}{{c}}{{{AGREEMENT_SOURCES[source]}}}" for source in agreement]
+    rules = [f"\\cmidrule(lr){{{2 + 4 * i}-{5 + 4 * i}}}" for i in range(len(agreement))]
+    top = [" & ".join(["", *titles]) + " \\\\", " ".join(rules)]
     body = []
     for column in (*DIMENSIONS, FLAG):
         cells = [HUMAN_LABELS[column]]
@@ -661,7 +667,7 @@ def latex_agreement(agreement: dict[str, dict[str, dict[str, float | None]]]) ->
         "Agreement with the first rater: share of exact agreement, Cohen's kappa and, for the "
         "three-point dimensions, quadratic-weighted kappa."
     )
-    return latex_table(header, body, caption, "tab:agreement")
+    return latex_table(header, body, caption, "tab:agreement", top=top)
 
 
 # --- Figures -----------------------------------------------------------------------
@@ -872,10 +878,12 @@ def make_results(args: argparse.Namespace) -> list[Path]:
     figures, tables = args.figures_dir, args.tables_dir
     written = []
     rows = results_rows(metrics, human, **bootstrap)
-    systems = ordered_systems(name for row in rows for name in row.cells)
-    caption = results_caption(metrics, human)
-    written.append(write_text(markdown_results(rows, systems, caption), args.table))
-    written.append(write_text(latex_results(rows, systems, caption), tables / "results_main.tex"))
+    if rows:
+        systems = ordered_systems(name for row in rows for name in row.cells)
+        caption = results_caption(metrics, human)
+        written.append(write_text(markdown_results(rows, systems, caption), args.table))
+        latex = latex_results(rows, systems, caption)
+        written.append(write_text(latex, tables / "results_main.tex"))
 
     differences = difference_rows(metrics, human, **bootstrap)
     if differences:

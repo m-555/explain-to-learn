@@ -250,6 +250,19 @@ def test_metrics_alone_give_the_automatic_rows(results):
     }
 
 
+def test_agreement_alone_gives_no_results_table(results):
+    args = results_args(results)
+    for option in ("--metrics", "--ratings"):
+        args[args.index(option) + 1] = str(results / "missing")
+    assets.main(args)
+
+    assert not (results / "assets" / "results_table.md").exists()
+    agreement = (results / "assets" / "tables" / "agreement.tex").read_text()
+    assert "\\multicolumn{4}{c}{Rater 2 vs rater 1}" in agreement
+    assert "\\cmidrule(lr){2-5} \\cmidrule(lr){6-9}" in agreement
+    assert {path.name for path in (results / "figures").iterdir()} == {"judge_agreement.png"}
+
+
 def test_human_differences_are_paired_by_edit(results):
     rows = assets.load_ratings(
         results / "outputs" / "human_eval" / "ratings_rater1.csv",
