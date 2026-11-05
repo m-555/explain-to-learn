@@ -1,0 +1,32 @@
+name: Sync demo Space
+
+# Upload the demo to the Hugging Face Space named by the repository variable HF_SPACE_ID,
+# by hand (Actions -> Sync demo Space -> Run workflow) or after a release is published.
+# Needs the secret HF_TOKEN with write access to that Space; see docs/release.md, step 5.
+# The Space's package requirement is pinned to the release tag, or to the commit when
+# the workflow is run by hand.
+on:
+  workflow_dispatch:
+  release:
+    types: [published]
+
+permissions:
+  contents: read
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    if: vars.HF_SPACE_ID != ''
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.11"
+      - name: Install the Hugging Face Hub client
+        run: pip install "huggingface_hub>=0.30"
+      - name: Upload the demo
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+          HF_SPACE_ID: ${{ vars.HF_SPACE_ID }}
+          REF: ${{ github.event.release.tag_name || github.sha }}
+        run: python scripts/sync_space.py --space "$HF_SPACE_ID" --ref "$REF"
