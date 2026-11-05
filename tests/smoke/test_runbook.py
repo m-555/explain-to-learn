@@ -65,6 +65,27 @@ MARKS = "outputs/annotations"  # the annotation app's output folder
 # Folders where learner text may be written; everything else must stay free of it.
 PRIVATE = ("data/raw", "data/processed", "outputs")
 RATINGS = ("no", "partly", "yes")
+MAKE_TARGETS = [
+    "env-check",
+    "data",
+    "graph-check",
+    "baselines",
+    "serve-teacher",
+    "silver",
+    "sft-data",
+    "train",
+    "gold-runs",
+    "metrics",
+    "rating-sheets",
+    "judge",
+    "agreement",
+    "report-assets",
+    "correction-eval",
+    "demo",
+    "smoke",
+    "test",
+    "lint",
+]
 
 
 def errant_ready() -> bool:
@@ -530,6 +551,60 @@ def test_run_registry_collects_the_runs(runbook: Runbook):
         assert f"| {run} |" in sections[2]
     if rb.path("eval/results/correction_qwen3-4b-prompted.json").exists():
         assert "| qwen3-4b-prompted | llm |" in sections[3]
+
+
+def make_targets() -> list[str]:
+    """The targets `make help` lists."""
+    result = subprocess.run(["make", "help"], cwd=ROOT, capture_output=True, text=True, check=True)
+    words = [line.split()[0] for line in result.stdout.splitlines() if line.startswith("  ")]
+    return [word for word in words if "=" not in word]  # not the lines of variables
+
+
+@pytest.mark.skipif(shutil.which("make") is None, reason="needs GNU make")
+def test_make_targets_name_existing_scripts_and_modules():
+    """`make -n` of every target: each script it runs exists, each module imports."""
+    targets = make_targets()
+    assert set(MAKE_TARGETS) <= set(targets)
+    for target in targets:
+        result = subprocess.run(["make", "-n", target], cwd=ROOT, capture_output=True, text=True)
+        assert result.returncode == 0, f"make -n {target}:\n{result.stderr}"
+        words = shlex.split(result.stdout.replace("$system", "A"))
+        for word in words:
+            if word.startswith(("scripts/", "train/", "demo/")):
+                assert (ROOT / word).is_file(), f"make {target} runs {word}, which does not exist"
+        for word, module in zip(words, words[1:], strict=False):
+            if word == "-m" and module.startswith("explain_to_learn"):
+                assert importlib.util.find_spec(module), f"make {target}: no module {module}"
+
+
+@pytest.mark.skipif(shutil.which("make") is None, reason="needs GNU make")
+def test_make_targets_rerun_the_steps(runbook: Runbook):
+    """The make targets run in the runbook's working directory; finished steps resume."""
+    rb = runbook
+    links = [rb.path(name) for name in ("Makefile", "scripts", "train")]
+    for link in links:
+        link.symlink_to(ROOT / link.name)
+    port = rb.server.server_address[1]
+    make = f"make PYTHON={shlex.quote(sys.executable)} PORT={port}"
+    try:
+        rb.run(f"{make} graph-check STRICT=")
+        assert "12 already done" in rb.run(f"{make} baselines N_DEV={N_DEV}")
+        rb.run(f"{make} silver N_SILVER={N_SILVER} SILVER_WORKERS=4")
+        rb.run(f"{make} silver-score")
+        rb.run(f"{make} sft-data")
+        rb.run(f"{make} dev-variant")
+        assert "0 edits to run" in rb.run(f"{make} gold-runs SYSTEMS='A B C D R' MODE=hint")
+        rb.run(f"{make} metrics MODE=hint")
+        rb.run(f"{make} gee SYSTEMS='A D R'")
+        rb.run(f"{make} human-eval")
+        rb.run(f"{make} judge-check MODEL=openai/gpt-oss-20b")
+        rb.run(f"{make} agreement")
+        rb.run(f"{make} dpo-data")
+        rb.run(f"{make} report-assets", ("report/figures/judge_vs_rater_means.png",))
+        rb.run(f"{make} runs", ("eval/results/runs.md",))
+    finally:
+        for link in links:
+            link.unlink()
 
 
 def test_learner_text_stays_in_private_folders(runbook: Runbook):
