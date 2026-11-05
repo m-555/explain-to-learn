@@ -8,11 +8,12 @@ into a frozen "ref" adapter and uses it as the reference model, so the reference
 system D itself and no second model is loaded.
 
 The trained adapter is saved to `outputs/adapters/<run>/` (git-ignored), without the
-reference copy, with `run_info.json`: settings, data sizes, losses, reward accuracy and
-margin on the validation pairs, peak GPU memory, run time and library versions. It loads
-on the base model like the C and D adapters. Loading the config, naming the logging
-project, counting long examples, the argument checks, the peak memory, the library
-versions and the Hub upload reuse the helpers of `train/train_lora.py`.
+reference copy, with `run_info.json`: date, git commit, settings, data sizes, losses,
+reward accuracy and margin on the validation pairs, peak GPU memory, run time and library
+versions. It loads on the base model like the C and D adapters. Loading the config, naming
+the logging project, counting long examples, the argument checks, the peak memory, the
+library versions, the git commit and the Hub upload reuse the helpers of
+`train/train_lora.py`.
 
 Checked against TRL 1.15.0 and PEFT 0.21.2, the versions pinned in the `train` extra:
 `DPOConfig` takes `beta`, `loss_type` (a list) and `max_length` (there is no separate
@@ -35,6 +36,7 @@ from __future__ import annotations
 import argparse
 import json
 import time
+from datetime import datetime
 from pathlib import Path
 from typing import Any
 
@@ -42,6 +44,7 @@ from typing import Any
 from train_lora import (
     check_output_arguments,
     count_long_examples,
+    git_commit,
     library_versions,
     load_config,
     peak_gpu_memory,
@@ -137,6 +140,8 @@ def train(config: dict[str, Any], args: argparse.Namespace) -> dict[str, Any]:
     trainer.model.save_pretrained(str(adapter_dir), selected_adapters=["default"])
     info = {
         "run": args.run_name,
+        "date": datetime.now().astimezone().isoformat(timespec="seconds"),
+        "git_commit": git_commit(),
         "variant": config["variant"],
         "adapter_trained_from": args.adapter,
         "config": config,

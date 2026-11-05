@@ -3,10 +3,10 @@
 Reads one variant of `train/lora_config.yaml` and the SFT examples written by
 `python -m explain_to_learn.train_data`. Training uses Unsloth by default, or plain
 TRL + PEFT with `--backend peft`. The adapter is saved to `outputs/adapters/<run>/`
-(git-ignored) with `run_info.json`: settings, data sizes, losses, peak GPU memory, run
-time and library versions. Logging to Weights & Biases or MLflow is off unless chosen.
-`--push-to-hub` uploads the adapter to a Hugging Face Hub repository, using the token
-in the HF_TOKEN environment variable.
+(git-ignored) with `run_info.json`: date, git commit, settings, data sizes, losses, peak
+GPU memory, run time and library versions. Logging to Weights & Biases or MLflow is off
+unless chosen. `--push-to-hub` uploads the adapter to a Hugging Face Hub repository,
+using the token in the HF_TOKEN environment variable.
 
 Runs are seeded: the same config, data and seed give the same data order and LoRA
 initialisation. GPU kernels are not bit-for-bit deterministic, so losses can still
@@ -26,11 +26,14 @@ import copy
 import importlib.metadata
 import json
 import os
+import subprocess
 import time
+from datetime import datetime
 from pathlib import Path
 from typing import Any
 
 CONFIG_PATH = Path(__file__).with_name("lora_config.yaml")
+REPO_ROOT = Path(__file__).resolve().parents[1]
 SYSTEMS = ("c", "d")
 LIBRARIES = ("torch", "transformers", "trl", "peft", "unsloth", "bitsandbytes")
 
@@ -111,6 +114,23 @@ def check_output_arguments(parser: argparse.ArgumentParser, args: argparse.Names
         parser.error("--push-to-hub needs a Hugging Face token in HF_TOKEN")
     if (args.output_dir / args.run_name / "adapter_config.json").exists():
         parser.error(f"{args.output_dir / args.run_name} already exists; choose another --run-name")
+
+
+def git_commit(repo: Path = REPO_ROOT) -> str:
+    """The checked-out commit, with `-dirty` if tracked files have uncommitted changes.
+
+    Returns "unknown" when git or the repository is not available. `safe.directory`
+    lets git read a repository mounted from the host into the training container.
+    """
+    git = ["git", "-c", f"safe.directory={repo}", "-C", str(repo)]
+    try:
+        commit = subprocess.run(
+            [*git, "rev-parse", "HEAD"], capture_output=True, text=True, check=True
+        ).stdout.strip()
+        dirty = subprocess.run([*git, "diff", "--quiet", "HEAD"], capture_output=True)
+    except (OSError, subprocess.CalledProcessError):
+        return "unknown"
+    return commit + ("-dirty" if dirty.returncode == 1 else "")
 
 
 def load_with_unsloth(config: dict[str, Any]) -> tuple[Any, Any, None]:
@@ -240,6 +260,8 @@ def train(config: dict[str, Any], args: argparse.Namespace) -> dict[str, Any]:
     trainer.model.save_pretrained(str(adapter_dir))
     info = {
         "run": args.run_name,
+        "date": datetime.now().astimezone().isoformat(timespec="seconds"),
+        "git_commit": git_commit(),
         "system": args.system,
         "variant": config["variant"],
         "backend": args.backend,
