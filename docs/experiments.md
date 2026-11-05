@@ -129,16 +129,7 @@ metrics before any expensive step. It uses 500 W&I+LOCNESS dev edits outside the
 set, drawn with a fixed seed:
 
 ```bash
-mkdir -p outputs
-python - <<'EOF'
-import random
-from explain_to_learn.edits import read_jsonl
-gold = set(open("data/splits/gold_edit_ids.txt").read().split())
-pool = sorted(e.edit_id for e in read_jsonl("data/processed/edits.jsonl")
-              if e.split == "dev" and e.corpus in ("wi", "locness") and e.edit_id not in gold)
-ids = sorted(random.Random(0).sample(pool, 500))
-open("outputs/dev_ids.txt", "w").write("".join(i + "\n" for i in ids))
-EOF
+python scripts/sample_dev_ids.py --n 500
 ```
 
 Run A and B with the model loaded in the process (transformers backend, about 8 GB of
@@ -199,11 +190,18 @@ This keeps outputs that parse, name the graph concept and name the edited words,
 writes `outputs/silver/kept.jsonl`, the counts in `eval/results/silver_filter.md` and
 `.json`, and 200 random kept items to `outputs/silver_handcheck.csv`.
 
-*Teacher time:* fill the `correct` column of `outputs/silver_handcheck.csv` with `1`
-(correct) or `0` for every row, judging the rule, the located words and the level. Then:
+*Teacher time:* mark every item correct or not in the annotation app, judging the rule,
+the located words and the level ([annotation guide](annotation_guide.md#d-silver-hand-check)):
 
 ```bash
-python scripts/make_silver.py score
+python -m explain_to_learn.annotation --task silver
+```
+
+The app saves the marks to `outputs/annotations/silver_handcheck.csv`, not to the
+sample file, which the filter rewrites each time it runs. Then:
+
+```bash
+python scripts/make_silver.py score --handcheck outputs/annotations/silver_handcheck.csv
 ```
 
 This prints the share of correct items with a 95% Wilson interval and writes
@@ -211,7 +209,8 @@ This prints the share of correct items with a 95% Wilson interval and writes
 and repeat steps 5 and 6 before training.
 
 *Committed:* `eval/results/silver_filter.md`, `silver_filter.json`,
-`silver_handcheck.json`. *Local:* `outputs/silver/`, `outputs/silver_handcheck.csv`.
+`silver_handcheck.json`. *Local:* `outputs/silver/`, `outputs/silver_handcheck.csv`,
+`outputs/annotations/`.
 
 ## 7. LoRA adapters for C and D
 
@@ -306,17 +305,25 @@ are done.
 *Teacher time:* rate with the annotation app, following
 [annotation_guide.md](annotation_guide.md), and the rubric in
 [eval/rubric.md](../eval/rubric.md). Both raters first rate the rubric's examples and
-discuss disagreements. Save the filled sheets as
-`outputs/human_eval/ratings_rater1.csv` (400 items) and `ratings_rater2.csv` (50 items).
+discuss disagreements. The first rater's ratings are saved to
+`outputs/annotations/ratings_rater1.csv` (400 items):
+
+```bash
+python -m explain_to_learn.annotation --task ratings
+```
+
+The second rater rates the 50-item sheet on their own computer
+([annotation guide](annotation_guide.md#c-second-rater)) and sends back
+`ratings_<their name>.csv`; save it in `outputs/annotations/` as `ratings_rater2.csv`.
 
 Summarise the main rater's ratings per system, error category and level:
 
 ```bash
-python -m explain_to_learn.human_eval --ratings outputs/human_eval/ratings_rater1.csv --key outputs/human_eval/key.csv --out-dir eval/results --name human_eval_rater1
+python -m explain_to_learn.human_eval --ratings outputs/annotations/ratings_rater1.csv --key outputs/human_eval/key.csv --out-dir eval/results --name human_eval_rater1
 ```
 
 *Committed:* `eval/results/human_eval_rater1.md` and its `_by_*.csv` tables.
-*Local:* `outputs/human_eval/`.
+*Local:* `outputs/human_eval/`, `outputs/annotations/`.
 
 ## 11. Agreement and the LLM judge
 
@@ -324,7 +331,7 @@ Agreement between the two raters on their 50 shared items (exact agreement, Cohe
 kappa, quadratic-weighted kappa):
 
 ```bash
-python scripts/agreement.py --first outputs/human_eval/ratings_rater1.csv --second outputs/human_eval/ratings_rater2.csv --title "Rater 1 vs rater 2" --out eval/results/agreement_raters.md
+python scripts/agreement.py --first outputs/annotations/ratings_rater1.csv --second outputs/annotations/ratings_rater2.csv --title "Rater 1 vs rater 2" --out eval/results/agreement_raters.md
 ```
 
 The LLM judge rates the same sheet with the rubric as its instructions. With the
@@ -340,11 +347,13 @@ all items and compare the judge with the main rater:
 
 ```bash
 python scripts/llm_judge.py --model openai/gpt-oss-20b --base-url http://localhost:8001/v1 --max-tokens 2048
-python scripts/agreement.py --first outputs/human_eval/ratings_rater1.csv --second outputs/human_eval/ratings_llm_judge.csv --title "LLM judge vs rater 1" --out eval/results/agreement_llm_judge.md
+python scripts/agreement.py --first outputs/annotations/ratings_rater1.csv --second outputs/human_eval/ratings_llm_judge.csv --title "LLM judge vs rater 1" --out eval/results/agreement_judge.md
 python -m explain_to_learn.human_eval --ratings outputs/human_eval/ratings_llm_judge.csv --key outputs/human_eval/key.csv --out-dir eval/results --name human_eval_llm_judge
 ```
 
-*Committed:* `eval/results/agreement_raters.md`, `agreement_llm_judge.md`,
+`scripts/make_report_assets.py` reads both agreement tables from these paths.
+
+*Committed:* `eval/results/agreement_raters.md`, `agreement_judge.md`,
 `human_eval_llm_judge.md` and its tables. *Local:* the judge's ratings and settings in
 `outputs/human_eval/`.
 
