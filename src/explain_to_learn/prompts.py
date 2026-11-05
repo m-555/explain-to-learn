@@ -57,8 +57,6 @@ are fine.
 _ATTACH_LEFT = re.compile(r" (n't|'s|'re|'ve|'ll|'m|'d|[.,!?;:%)\]}])")
 _ATTACH_RIGHT = re.compile(r"([(\[{$]) ")
 
-_OPERATION_VERBS = {"R": "replace", "M": "add", "U": "remove"}
-
 
 def detokenize(tokens: str | Sequence[str]) -> str:
     """Join M2 tokens into readable text: `do n't go .` -> `don't go.`."""
