@@ -362,12 +362,20 @@ results table, the report's LaTeX tables and its figures. Missing inputs are ski
 Depends on `edits`, `human_eval`, `io` and `metrics`; Matplotlib and NumPy (the
 `analysis` extra).
 
+**`sample_dev_ids.py`** draws the seeded sample of development edit IDs outside the gold
+set (`outputs/dev_ids.txt`) that the baselines run on. Depends on `edits` and `io`.
+
+**`collect_runs.py`** is the run registry: it gathers every adapter's `run_info.json`
+and every metrics and correction result into `eval/results/runs.md` (training runs,
+evaluation runs and correction runs; no learner text). Depends on `io`.
+
 ### Training: `train/`
 
 **`train_lora.py`** trains one LoRA adapter for system C or D on the examples from
 `train_data.py`, with Unsloth or plain TRL and PEFT, and saves the adapter with
-`run_info.json` (settings, data sizes, losses, peak GPU memory, run time, library
-versions). It can log to Weights & Biases or MLflow and push the adapter to the Hugging
+`run_info.json` (date, git commit, settings, data sizes, losses, peak GPU memory, run
+time, library versions) and `environment.txt` (the installed packages, from `pip
+freeze`). It can log to Weights & Biases or MLflow and push the adapter to the Hugging
 Face Hub. It also holds the helpers that `train_dpo.py` reuses. Depends on PyYAML and
 the `train` extra, and needs a CUDA GPU.
 
@@ -407,7 +415,10 @@ and `prompts`.
 - `docker/`: the training image for the RTX 5090.
 - `tests/`: unit and integration tests on invented sentences, with fake models, so no
   test needs a GPU or the corpora. Tests that need ERRANT, Gradio or TRL skip when the
-  package is missing.
+  package is missing. `tests/smoke/` runs the whole runbook in order on an invented
+  corpus in the BEA-2019 format against a fake OpenAI-compatible server (`pytest -m
+  smoke`, or `make smoke`); it is left out of the default run and has its own CI job.
+- `Makefile`: one target per runbook step (`make help` lists them), run inside WSL2.
 
 ## Intermediate files
 
@@ -438,7 +449,7 @@ people read the file, not code.
 | `report/figures/data_*.png` | `make_report_assets.py data` | the report | Four charts of the edit table | Committed |
 | `report/figures/grammar_graph.png`, `report/grammar_graph.ttl` | `draw_graph.py`, `export_rdf.py` | the report, RDF tools | The prerequisite graph as a figure and as SKOS Turtle | Committed |
 | `outputs/concept_examples/<concept_id>.md`, `index.md` | `concept_examples.py` | – | Error types, counts per level and example training edits per concept | Local |
-| `outputs/dev_ids.txt` | the runbook's step 4 | `run_system.py --ids`, `compute_metrics.py --ids` | 500 development edit IDs outside the gold set | Local |
+| `outputs/dev_ids.txt` | `sample_dev_ids.py` (runbook step 4) | `run_system.py --ids`, `compute_metrics.py --ids` | 500 development edit IDs outside the gold set | Local |
 
 ### Generation and automatic metrics
 
@@ -446,6 +457,7 @@ people read the file, not code.
 | --- | --- | --- | --- | --- |
 | `outputs/<system>/<run>.jsonl` | `run_system.py` (`evaluate_on_gee.py run` writes `gee.jsonl`) | `compute_metrics.py`, `make_rating_sheet.py`, `evaluate_on_gee.py compare`, the gold task (`--drafts`), the preference task (`--pair`) | One generation record per edit: `system`, `run`, `edit_id`, `level`, `mode`, `grounded`, `concept_id`, `concept_name`, `raw`, `parsed` (`concept`, `explanation`, `hint`, or null), `attempts`, `latency_s`, `error` | Local |
 | `eval/results/metrics_<run>.md`, `.json` | `compute_metrics.py` | `make_report_assets.py results` | Per system: summary overall, `by_level` and `by_error_category` (means and counts of `covered`, `concept_correct`, `faithful`, `contradicts_rule`, `within_length`, off-level term shares); `comparisons` with paired bootstrap `diff`, `low`, `high`, `p_value`; optional `correction` scores | Committed |
+| `eval/results/runs.md` | `collect_runs.py` | the experiment log, the report | One row per training, evaluation and correction run: date, git commit, settings, peak GPU memory, time, headline metrics | Committed |
 
 ### Silver data and training
 
@@ -458,7 +470,7 @@ people read the file, not code.
 | `outputs/annotations/silver_handcheck.csv` | the silver hand-check task | `make_silver.py score --handcheck` | The same columns with `correct` set to 1 or 0, plus `note` | Local |
 | `eval/results/silver_handcheck.json` | `make_silver.py score` | – | `rated`, `correct`, `unrated`, `accuracy`, Wilson `low` and `high` | Committed |
 | `outputs/sft/system_{c,d}/{train,validation}.jsonl` | `train_data.py` | `train_lora.py` | `edit_id`, `essay_key`, `system`, `mode`, `level`, `grounded`, `prompt` (chat messages), `completion` (the assistant's JSON answer) | Local |
-| `outputs/adapters/<run>/` | `train_lora.py`, `train_dpo.py` | `run_system.py` (through `adapter` in `systems.yaml` or `--adapter`), `serve_model.sh`, the demo, `train_dpo.py` (the D adapter) | PEFT adapter files and `run_info.json` (settings, data sizes, losses, peak GPU memory, time, versions) | Local; adapters go to the Hugging Face Hub |
+| `outputs/adapters/<run>/` | `train_lora.py`, `train_dpo.py` | `run_system.py` (through `adapter` in `systems.yaml` or `--adapter`), `serve_model.sh`, the demo, `train_dpo.py` (the D adapter) | PEFT adapter files, `run_info.json` (date, git commit, settings, data sizes, losses, peak GPU memory, time, versions) and `environment.txt` (`pip freeze`) | Local; adapters go to the Hugging Face Hub |
 | `outputs/checkpoints/<run>/` | `train_lora.py`, `train_dpo.py` | – | The trainer's working folder; no checkpoints are saved | Local |
 
 ### Human evaluation and preferences
@@ -476,7 +488,7 @@ people read the file, not code.
 | `outputs/dpo/{train,validation}.jsonl` | `preference.py` | `train_dpo.py` | `edit_id`, `essay_key`, `level`, `mode`, `source_systems`, `prompt`, `chosen`, `rejected` | Local |
 
 `make_report_assets.py results` reads the first rater's ratings from
-`outputs/human_eval/ratings_rater1.csv` and the judge agreement from
+`outputs/annotations/ratings_rater1.csv` (where the annotation app saves it) and the judge agreement from
 `eval/results/agreement_judge.md` by default; `--ratings` and `--agreement-judge` point
 it elsewhere. Likewise `make_silver.py score` reads `outputs/silver_handcheck.csv`
 unless `--handcheck` names the app's marks file.
