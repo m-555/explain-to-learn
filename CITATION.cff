@@ -1,0 +1,234 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+type: software
+title: "Explain-to-Learn"
+abstract: >-
+  Level-matched explanations and hints for grammar corrections in English learners'
+  writing, grounded in a teacher-built grammar graph, with the data pipeline, LoRA
+  training, automatic metrics and human evaluation used to compare grounded and
+  ungrounded systems.
+authors:
+  - family-names: Mirzaei
+    given-names: Mohsen
+version: 0.1.0
+license: MIT
+repository-code: "https://github.com/m-555/explain-to-learn"
+keywords:
+  - grammatical error explanation
+  - grammatical error correction
+  - language learning
+  - CEFR
+  - educational NLP
+  - LoRA
+references:
+  - type: data
+    title: "W&I+LOCNESS v2.1 and FCE v2.1 (BEA-2019 shared task releases)"
+    authors:
+      - family-names: Bryant
+        given-names: Christopher
+      - family-names: Felice
+        given-names: Mariano
+      - family-names: Andersen
+        given-names: Øistein E.
+      - family-names: Briscoe
+        given-names: Ted
+    year: 2019
+    url: "https://www.cl.cam.ac.uk/research/nl/bea2019st/"
+    notes: >-
+      For non-commercial research and educational use only; downloaded from the
+      BEA-2019 shared-task page and not redistributed.
+  - type: data
+    title: "LOCNESS (Louvain Corpus of Native English Essays)"
+    authors:
+      - name: "Centre for English Corpus Linguistics (CECL), Université catholique de Louvain"
+    notes: "The native-speaker essays of W&I+LOCNESS."
+  - type: article
+    title: "Developing an automated writing placement system for ESL learners"
+    authors:
+      - family-names: Yannakoudakis
+        given-names: Helen
+      - family-names: Andersen
+        given-names: Øistein E.
+      - family-names: Geranpayeh
+        given-names: Ardeshir
+      - family-names: Briscoe
+        given-names: Ted
+      - family-names: Nicholls
+        given-names: Diane
+    journal: "Applied Measurement in Education"
+    volume: 31
+    issue: 3
+    start: 251
+    end: 267
+    year: 2018
+    doi: "10.1080/08957347.2018.1464447"
+  - type: conference-paper
+    title: "A New Dataset and Method for Automatically Grading ESOL Texts"
+    authors:
+      - family-names: Yannakoudakis
+        given-names: Helen
+      - family-names: Briscoe
+        given-names: Ted
+      - family-names: Medlock
+        given-names: Ben
+    collection-title: >-
+      Proceedings of the 49th Annual Meeting of the Association for Computational
+      Linguistics: Human Language Technologies
+    publisher:
+      name: "Association for Computational Linguistics"
+    start: 180
+    end: 189
+    year: 2011
+    url: "https://aclanthology.org/P11-1019/"
+  - type: conference-paper
+    title: "The BEA-2019 Shared Task on Grammatical Error Correction"
+    authors:
+      - family-names: Bryant
+        given-names: Christopher
+      - family-names: Felice
+        given-names: Mariano
+      - family-names: Andersen
+        given-names: Øistein E.
+      - family-names: Briscoe
+        given-names: Ted
+    collection-title: >-
+      Proceedings of the Fourteenth Workshop on Innovative Use of NLP for Building
+      Educational Applications
+    publisher:
+      name: "Association for Computational Linguistics"
+    start: 52
+    end: 75
+    year: 2019
+    doi: "10.18653/v1/W19-4406"
+  - type: conference-paper
+    title: "Automatic Annotation and Evaluation of Error Types for Grammatical Error Correction"
+    authors:
+      - family-names: Bryant
+        given-names: Christopher
+      - family-names: Felice
+        given-names: Mariano
+      - family-names: Briscoe
+        given-names: Ted
+    collection-title: >-
+      Proceedings of the 55th Annual Meeting of the Association for Computational
+      Linguistics (Volume 1: Long Papers)
+    publisher:
+      name: "Association for Computational Linguistics"
+    start: 793
+    end: 805
+    year: 2017
+    doi: "10.18653/v1/P17-1074"
+  - type: conference-paper
+    title: >-
+      Automatic Extraction of Learner Errors in ESL Sentences Using Linguistically
+      Enhanced Alignments
+    authors:
+      - family-names: Felice
+        given-names: Mariano
+      - family-names: Bryant
+        given-names: Christopher
+      - family-names: Briscoe
+        given-names: Ted
+    collection-title: >-
+      Proceedings of COLING 2016, the 26th International Conference on Computational
+      Linguistics: Technical Papers
+    publisher:
+      name: "The COLING 2016 Organizing Committee"
+    start: 825
+    end: 835
+    year: 2016
+    url: "https://aclanthology.org/C16-1079/"
+  - type: conference-paper
+    title: "GEE! Grammar Error Explanation with Large Language Models"
+    authors:
+      - family-names: Song
+        given-names: Yixiao
+      - family-names: Krishna
+        given-names: Kalpesh
+      - family-names: Bhatt
+        given-names: Rajesh
+      - family-names: Gimpel
+        given-names: Kevin
+      - family-names: Iyyer
+        given-names: Mohit
+    collection-title: "Findings of the Association for Computational Linguistics: NAACL 2024"
+    publisher:
+      name: "Association for Computational Linguistics"
+    start: 754
+    end: 781
+    year: 2024
+    doi: "10.18653/v1/2024.findings-naacl.49"
+  - type: conference-paper
+    title: >-
+      Findings of the BEA 2025 Shared Task on Pedagogical Ability Assessment of
+      AI-powered Tutors
+    authors:
+      - family-names: Kochmar
+        given-names: Ekaterina
+      - family-names: Maurya
+        given-names: Kaushal Kumar
+      - family-names: Petukhova
+        given-names: Kseniia
+      - family-names: Srivatsa
+        given-names: KV Aditya
+      - family-names: Tack
+        given-names: Anaïs
+      - family-names: Vasselli
+        given-names: Justin
+    collection-title: >-
+      Proceedings of the 20th Workshop on Innovative Use of NLP for Building Educational
+      Applications (BEA 2025)
+    publisher:
+      name: "Association for Computational Linguistics"
+    start: 1011
+    end: 1033
+    year: 2025
+    doi: "10.18653/v1/2025.bea-1.77"
+  - type: article
+    title: "LoRA: Low-Rank Adaptation of Large Language Models"
+    authors:
+      - family-names: Hu
+        given-names: Edward J.
+      - family-names: Shen
+        given-names: Yelong
+      - family-names: Wallis
+        given-names: Phillip
+      - family-names: Allen-Zhu
+        given-names: Zeyuan
+      - family-names: Li
+        given-names: Yuanzhi
+      - family-names: Wang
+        given-names: Shean
+      - family-names: Wang
+        given-names: Lu
+      - family-names: Chen
+        given-names: Weizhu
+    journal: "arXiv preprint"
+    year: 2021
+    url: "https://arxiv.org/abs/2106.09685"
+    identifiers:
+      - type: other
+        value: "arXiv:2106.09685"
+  - type: conference-paper
+    title: "A Simple Recipe for Multilingual Grammatical Error Correction"
+    authors:
+      - family-names: Rothe
+        given-names: Sascha
+      - family-names: Mallinson
+        given-names: Jonathan
+      - family-names: Malmi
+        given-names: Eric
+      - family-names: Krause
+        given-names: Sebastian
+      - family-names: Severyn
+        given-names: Aliaksei
+    collection-title: >-
+      Proceedings of the 59th Annual Meeting of the Association for Computational
+      Linguistics and the 11th International Joint Conference on Natural Language
+      Processing (Volume 2: Short Papers)
+    publisher:
+      name: "Association for Computational Linguistics"
+    start: 702
+    end: 707
+    year: 2021
+    doi: "10.18653/v1/2021.acl-short.89"
