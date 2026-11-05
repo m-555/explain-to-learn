@@ -88,6 +88,7 @@ class HandcheckTask(Task):
         return handcheck_accuracy(self.store.path)
 
     def status(self, index: int) -> str:
+        """The progress line, with the accuracy of the marks saved so far."""
         line = super().status(index)
         result = self.accuracy()
         if result and result["accuracy"] is not None:

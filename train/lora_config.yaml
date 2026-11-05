@@ -8,7 +8,7 @@
 # learns a low-rank update B·A (B is d x r, A is r x k) that is added as W + (alpha/r)·B·A.
 
 defaults:
-  seed: 42                          # Seeds data order, LoRA initialisation, dropout and the train/validation split.
+  seed: 42                          # Seeds data order, LoRA initialisation and dropout; train_data.py --seed splits the data.
 
   model:
     name: Qwen/Qwen3-4B-Instruct-2507  # 4B-parameter instruction model (Apache-2.0); the base of systems A to D.

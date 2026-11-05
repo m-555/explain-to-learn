@@ -78,13 +78,17 @@ class Span(NamedTuple):
 class Corrector(Protocol):
     """Anything that corrects a list of sentences, returning one sentence for each."""
 
-    def correct(self, sentences: list[str]) -> list[str]: ...
+    def correct(self, sentences: list[str]) -> list[str]:
+        """The corrected sentences, one for each input sentence."""
+        ...
 
 
 class Annotator(Protocol):
     """Sentence splitting, tokenisation and typed edits between two sentences."""
 
-    def sentences(self, text: str) -> list[str]: ...
+    def sentences(self, text: str) -> list[str]:
+        """The sentences of a text."""
+        ...
 
     def annotate(self, original: str, corrected: str) -> tuple[list[str], list[str], list[Span]]:
         """Return the original tokens, the corrected tokens and the edits."""
@@ -101,7 +105,7 @@ class ErrantAnnotator:
     files were made with, so edits look like the edit table's.
     """
 
-    def __init__(self, language: str = "en"):
+    def __init__(self, language: str = "en") -> None:
         import errant
 
         self.errant = errant.load(language)
@@ -112,6 +116,7 @@ class ErrantAnnotator:
         return [s for s in sentences if s]
 
     def annotate(self, original: str, corrected: str) -> tuple[list[str], list[str], list[Span]]:
+        """Both sentences' tokens and ERRANT's typed edits, without noop and UNK edits."""
         orig = self.errant.parse(original, tokenise=True)
         cor = self.errant.parse(corrected, tokenise=True)
         spans = [
@@ -237,7 +242,7 @@ class GecCorrector:
         num_beams: int = 5,
         batch_size: int = 32,
         device: str | None = None,
-    ):
+    ) -> None:
         import torch
         from transformers import AutoModelForSeq2SeqLM, AutoTokenizer
 
@@ -249,6 +254,7 @@ class GecCorrector:
         self.model.eval()
 
     def correct(self, sentences: list[str]) -> list[str]:
+        """Correct the sentences in batches; an empty output keeps the sentence."""
         corrected: list[str] = []
         for i in range(0, len(sentences), self.batch_size):
             batch = [self.prefix + s for s in sentences[i : i + self.batch_size]]
@@ -288,12 +294,15 @@ class EndpointCorrector:
     workers: int = 1
 
     def messages(self, sentence: str) -> list[dict]:
+        """The chat messages that ask the model to correct one sentence."""
         return [
             {"role": "system", "content": CORRECTION_PROMPT},
             {"role": "user", "content": sentence},
         ]
 
     def correct(self, sentences: list[str]) -> list[str]:
+        """Correct each sentence with its own request, `workers` at a time."""
+
         def one(sentence: str) -> str:
             return clean_correction(
                 self.backend.complete(self.messages(sentence), self.decoding), sentence
@@ -369,6 +378,7 @@ class ExplainedEdit:
 
     @property
     def mode(self) -> str:
+        """The mode the edit was explained in: explain or hint."""
         return self.record["mode"]
 
     @property
@@ -395,10 +405,12 @@ class TextResult:
 
     @property
     def edits(self) -> list[Edit]:
+        """The edits of the text, in order."""
         return [item.edit for item in self.explained]
 
     @property
     def corrected_text(self) -> str:
+        """The corrected sentences, joined with spaces."""
         return " ".join(corrected for _, corrected in self.pairs)
 
     def to_dict(self) -> dict:

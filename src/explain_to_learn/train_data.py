@@ -30,7 +30,6 @@ Usage:
 from __future__ import annotations
 
 import argparse
-import json
 import random
 from collections.abc import Iterable, Mapping
 from pathlib import Path
@@ -39,25 +38,11 @@ from typing import Any
 from explain_to_learn import prompts
 from explain_to_learn.edits import Edit, read_jsonl
 from explain_to_learn.generate import edit_item
+from explain_to_learn.io import open_graph, read_rows, write_rows
 
 SYSTEMS = ("c", "d")
 SEED = 42
 VALIDATION_SHARE = 0.05
-
-
-def read_rows(path: str | Path) -> list[dict[str, Any]]:
-    """Read a JSON Lines file into a list of dictionaries."""
-    with Path(path).open(encoding="utf-8") as lines:
-        return [json.loads(line) for line in lines if line.strip()]
-
-
-def write_rows(rows: Iterable[dict[str, Any]], path: str | Path) -> None:
-    """Write dictionaries to a JSON Lines file, one per line."""
-    path = Path(path)
-    path.parent.mkdir(parents=True, exist_ok=True)
-    with path.open("w", encoding="utf-8") as out:
-        for row in rows:
-            out.write(json.dumps(row, ensure_ascii=False) + "\n")
 
 
 def validation_essays(
@@ -99,7 +84,8 @@ def build_examples(
     missing = [row["edit_id"] for row in rows if row["edit_id"] not in edits]
     if missing:
         raise ValueError(
-            f"{len(missing)} silver edits are not in the edit table, e.g. {missing[0]}"
+            f"{len(missing)} silver edits are not in the edit table, e.g. {missing[0]}; "
+            "pass the edit table that the silver data was made from (--edits)"
         )
     held_out = validation_essays((edits[row["edit_id"]].essay_key for row in rows), share, seed)
     splits: dict[str, list[dict[str, Any]]] = {"train": [], "validation": []}
@@ -110,6 +96,7 @@ def build_examples(
 
 
 def main(argv: list[str] | None = None) -> None:
+    """Write the SFT examples of systems C and D to `--out`."""
     parser = argparse.ArgumentParser(description="Build SFT examples for systems C and D.")
     parser.add_argument("--silver", type=Path, default=Path("outputs/silver/kept.jsonl"))
     parser.add_argument("--edits", type=Path, default=Path("data/processed/edits.jsonl"))
@@ -119,11 +106,9 @@ def main(argv: list[str] | None = None) -> None:
     parser.add_argument("--seed", type=int, default=SEED)
     args = parser.parse_args(argv)
 
-    from explain_to_learn.graph import load_graph  # needs the `graph` extra
-
     rows = read_rows(args.silver)
     edits = {edit.edit_id: edit for edit in read_jsonl(args.edits)}
-    grammar_graph = load_graph(args.graph / "concepts.yaml", args.graph / "errant_map.yaml")
+    grammar_graph = open_graph(args.graph)  # needs the `graph` extra
     for system in SYSTEMS:
         splits = build_examples(
             rows, edits, system, grammar_graph, args.validation_share, args.seed

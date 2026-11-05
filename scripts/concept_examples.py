@@ -26,11 +26,11 @@ from collections import Counter, defaultdict
 from collections.abc import Iterable
 from pathlib import Path
 
-from explain_to_learn.edits import Edit, read_jsonl
-from explain_to_learn.graph import OPERATIONS, GrammarGraph, load_graph
+from explain_to_learn.edits import LEVELS, Edit, read_jsonl
+from explain_to_learn.graph import OPERATIONS, GrammarGraph
+from explain_to_learn.io import open_graph, read_ids
 from explain_to_learn.prompts import mark_edit
 
-LEVELS = ("A1", "A2", "B1", "B2", "C1", "C2", "native")
 NOTE = (
     "> **Do not copy these sentences into `grammar_graph/concepts.yaml`.** They are learner\n"
     "> sentences from the training split, shown only so you can see which errors this\n"
@@ -187,6 +187,7 @@ def write_concept_files(
 
 
 def main(argv: list[str] | None = None) -> None:
+    """Write one example file per concept and the index to `--out`."""
     parser = argparse.ArgumentParser(description="Example edits per grammar concept.")
     parser.add_argument("--edits", type=Path, default=Path("data/processed/edits.jsonl"))
     parser.add_argument("--train-essays", type=Path, default=Path("data/splits/train_essays.txt"))
@@ -196,8 +197,8 @@ def main(argv: list[str] | None = None) -> None:
     parser.add_argument("--seed", type=int, default=0)
     args = parser.parse_args(argv)
 
-    graph = load_graph(args.graph / "concepts.yaml", args.graph / "errant_map.yaml")
-    train_essays = set(args.train_essays.read_text(encoding="utf-8").split())
+    graph = open_graph(args.graph)
+    train_essays = set(read_ids(args.train_essays))
     paths = write_concept_files(
         graph, read_jsonl(args.edits), train_essays, args.out, args.n, args.seed
     )

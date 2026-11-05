@@ -30,6 +30,7 @@ from explain_to_learn.generate import (
     make_backend,
     run_batch,
 )
+from explain_to_learn.io import open_graph, read_ids, read_rows, write_rows
 from explain_to_learn.silver import (
     assign_modes,
     counts_table,
@@ -43,32 +44,23 @@ SILVER_DIR = Path("outputs/silver")
 RESULTS_DIR = Path("eval/results")
 
 
-def open_graph(directory: Path):
-    """Load the grammar graph from its YAML files (see `explain_to_learn.graph`)."""
-    from explain_to_learn.graph import load_graph
-
-    return load_graph(directory / "concepts.yaml", directory / "errant_map.yaml")
-
-
-def read_lines(path: Path) -> list[str]:
-    return [line.strip() for line in path.read_text(encoding="utf-8").splitlines() if line.strip()]
-
-
-def read_rows(path: Path) -> list[dict]:
-    with path.open(encoding="utf-8") as lines:
-        return [json.loads(line) for line in lines if line.strip()]
-
-
 def generate(args: argparse.Namespace) -> None:
-    system = load_systems(args.config)[args.system]
+    """Step `generate`: run the teacher on a seeded sample of training edits."""
+    systems = load_systems(args.config)
+    if args.system not in systems:
+        raise SystemExit(
+            f"error: no system {args.system!r} in {args.config}; "
+            f"choose from {', '.join(sorted(systems))}"
+        )
+    system = systems[args.system]
     graph = open_graph(args.graph)
     edits = read_jsonl(args.edits)
     selected = select_training_edits(
         edits,
-        set(read_lines(args.train_essays)),
+        set(read_ids(args.train_essays)),
         n=args.n,
         seed=args.seed,
-        exclude_ids=read_lines(args.exclude) if args.exclude else (),
+        exclude_ids=read_ids(args.exclude) if args.exclude else (),
         has_concept=lambda error_type: graph.concept_for(error_type) is not None,
     )
     modes = assign_modes([e.edit_id for e in selected], args.hint_share, args.seed)
@@ -91,13 +83,10 @@ def generate(args: argparse.Namespace) -> None:
 
 
 def filter_outputs(args: argparse.Namespace) -> None:
+    """Step `filter`: keep usable outputs, count rejections, export the hand-check."""
     edits = {edit.edit_id: edit for edit in read_jsonl(args.edits)}
     kept, counts = filter_silver(read_rows(args.raw), edits)
-
-    args.kept.parent.mkdir(parents=True, exist_ok=True)
-    with args.kept.open("w", encoding="utf-8") as out:
-        for item in kept:
-            out.write(json.dumps(item, ensure_ascii=False) + "\n")
+    write_rows(kept, args.kept)
 
     args.results.mkdir(parents=True, exist_ok=True)
     summary = {"total": sum(counts.values()), **dict(counts)}
@@ -114,6 +103,7 @@ def filter_outputs(args: argparse.Namespace) -> None:
 
 
 def score(args: argparse.Namespace) -> None:
+    """Step `score`: write the hand-check accuracy with its 95% Wilson interval."""
     result = handcheck_accuracy(args.handcheck)
     args.results.mkdir(parents=True, exist_ok=True)
     (args.results / "silver_handcheck.json").write_text(json.dumps(result, indent=2) + "\n")
@@ -128,6 +118,7 @@ def score(args: argparse.Namespace) -> None:
 
 
 def main(argv: list[str] | None = None) -> None:
+    """Run one step: generate, filter or score."""
     parser = argparse.ArgumentParser(description="Silver training explanations.")
     parser.add_argument("--edits", type=Path, default=Path("data/processed/edits.jsonl"))
     parser.add_argument("--seed", type=int, default=0)

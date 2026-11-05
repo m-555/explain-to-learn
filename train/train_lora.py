@@ -77,6 +77,42 @@ def library_versions() -> dict[str, str]:
     return versions
 
 
+def set_logging_project(report_to: str, project: str) -> None:
+    """Name the Weights & Biases project or MLflow experiment for the run's logs.
+
+    A WANDB_PROJECT or MLFLOW_EXPERIMENT_NAME already set in the environment is kept.
+    Nothing is set when logging is off (`report_to="none"`).
+    """
+    if report_to == "wandb":
+        os.environ.setdefault("WANDB_PROJECT", project)
+    elif report_to == "mlflow":
+        os.environ.setdefault("MLFLOW_EXPERIMENT_NAME", project)
+
+
+def peak_gpu_memory() -> dict[str, float]:
+    """Peak GPU memory allocated and reserved by PyTorch since the last reset, in GB."""
+    import torch
+
+    return {
+        "allocated": round(torch.cuda.max_memory_allocated() / 1024**3, 2),
+        "reserved": round(torch.cuda.max_memory_reserved() / 1024**3, 2),
+    }
+
+
+def check_output_arguments(parser: argparse.ArgumentParser, args: argparse.Namespace) -> None:
+    """Stop with a usage error before training if the adapter could not be saved or pushed.
+
+    A Hub upload needs a repository ID and a token, and an existing adapter folder is never
+    overwritten.
+    """
+    if args.push_to_hub and not args.hub_repo:
+        parser.error("--push-to-hub needs --hub-repo")
+    if args.push_to_hub and not os.environ.get("HF_TOKEN"):
+        parser.error("--push-to-hub needs a Hugging Face token in HF_TOKEN")
+    if (args.output_dir / args.run_name / "adapter_config.json").exists():
+        parser.error(f"{args.output_dir / args.run_name} already exists; choose another --run-name")
+
+
 def load_with_unsloth(config: dict[str, Any]) -> tuple[Any, Any, None]:
     """Load the base model with Unsloth and add LoRA adapters to it."""
     import torch
@@ -149,10 +185,7 @@ def train(config: dict[str, Any], args: argparse.Namespace) -> dict[str, Any]:
     set_seed(config["seed"])
     torch.cuda.reset_peak_memory_stats()
     model_cfg, training = config["model"], config["training"]
-    if args.report_to == "wandb":
-        os.environ.setdefault("WANDB_PROJECT", config["logging"]["project"])
-    elif args.report_to == "mlflow":
-        os.environ.setdefault("MLFLOW_EXPERIMENT_NAME", config["logging"]["project"])
+    set_logging_project(args.report_to, config["logging"]["project"])
 
     load = load_with_unsloth if args.backend == "unsloth" else load_with_peft
     model, tokenizer, peft_config = load(config)
@@ -219,10 +252,7 @@ def train(config: dict[str, Any], args: argparse.Namespace) -> dict[str, Any]:
         "train_loss": result.training_loss,
         "eval_loss": eval_loss,
         "train_minutes": round(train_minutes, 1),
-        "peak_gpu_memory_gb": {
-            "allocated": round(torch.cuda.max_memory_allocated() / 1024**3, 2),
-            "reserved": round(torch.cuda.max_memory_reserved() / 1024**3, 2),
-        },
+        "peak_gpu_memory_gb": peak_gpu_memory(),
         "gpu": torch.cuda.get_device_name(0),
         "versions": library_versions(),
     }
@@ -263,16 +293,12 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     args = parser.parse_args(argv)
 
     args.run_name = args.run_name or f"{args.system}-{args.variant}"
-    if args.push_to_hub and not args.hub_repo:
-        parser.error("--push-to-hub needs --hub-repo")
-    if args.push_to_hub and not os.environ.get("HF_TOKEN"):
-        parser.error("--push-to-hub needs a Hugging Face token in HF_TOKEN")
-    if (args.output_dir / args.run_name / "adapter_config.json").exists():
-        parser.error(f"{args.output_dir / args.run_name} already exists; choose another --run-name")
+    check_output_arguments(parser, args)
     return args
 
 
 def main() -> None:
+    """Train one adapter, print a summary and push it to the Hub if asked."""
     args = parse_args()
     config = load_config(args.config, args.variant)
     args.report_to = args.report_to or config["logging"]["report_to"]

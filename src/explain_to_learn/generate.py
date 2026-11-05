@@ -29,6 +29,7 @@ from pathlib import Path
 from typing import Any, Protocol
 
 from explain_to_learn.edits import Edit
+from explain_to_learn.io import read_rows
 from explain_to_learn.prompts import build_messages, prompt_level
 
 OUTPUT_FIELDS = ("concept", "explanation", "hint")
@@ -55,7 +56,9 @@ class Decoding:
 class Backend(Protocol):
     """Anything that turns chat messages into the model's reply text."""
 
-    def complete(self, messages: list[dict], decoding: Decoding) -> str: ...
+    def complete(self, messages: list[dict], decoding: Decoding) -> str:
+        """The model's reply text to `messages`, decoded with `decoding`."""
+        ...
 
 
 @dataclass
@@ -160,6 +163,7 @@ class OpenAIBackend:
         }
 
     def complete(self, messages: list[dict], decoding: Decoding) -> str:
+        """Send the messages to `/chat/completions`; the reply text, or ""."""
         body = json.dumps(self.request_body(messages, decoding)).encode("utf-8")
         request = urllib.request.Request(
             self.base_url.rstrip("/") + "/chat/completions",
@@ -177,7 +181,7 @@ class OpenAIBackend:
 class TransformersBackend:
     """A local Hugging Face causal LM, with an optional PEFT (LoRA) adapter."""
 
-    def __init__(self, model: str, adapter: str | None = None, dtype: str = "bfloat16"):
+    def __init__(self, model: str, adapter: str | None = None, dtype: str = "bfloat16") -> None:
         import torch
         from transformers import AutoModelForCausalLM, AutoTokenizer
 
@@ -193,6 +197,7 @@ class TransformersBackend:
         self.model.eval()
 
     def complete(self, messages: list[dict], decoding: Decoding) -> str:
+        """Generate a reply locally; greedy unless the temperature is above 0."""
         inputs = self.tokenizer.apply_chat_template(
             messages, add_generation_prompt=True, return_tensors="pt", return_dict=True
         ).to(self.model.device)
@@ -307,11 +312,9 @@ def edit_item(
 
 def done_ids(path: str | Path) -> set[str]:
     """Edit IDs already written to an output file, so a long run can resume."""
-    path = Path(path)
-    if not path.is_file():
+    if not Path(path).is_file():
         return set()
-    with path.open(encoding="utf-8") as lines:
-        return {json.loads(line)["edit_id"] for line in lines if line.strip()}
+    return {row["edit_id"] for row in read_rows(path)}
 
 
 def run_batch(

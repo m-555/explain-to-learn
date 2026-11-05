@@ -44,7 +44,7 @@ from typing import Any
 
 from explain_to_learn.edits import Edit, read_jsonl
 from explain_to_learn.gee import GEE_FILE, match_edits, read_gee, reference_row
-from explain_to_learn.human_eval import write_csv
+from explain_to_learn.io import read_ids, read_rows, read_run, write_csv, write_ids, write_rows
 from explain_to_learn.metrics import faithfulness, paired_bootstrap, shown_text
 from explain_to_learn.prompts import detokenize, prompt_level
 from explain_to_learn.silver import wilson_interval
@@ -54,31 +54,16 @@ GEE_DIR = Path("outputs/gee")
 METRICS = (("covered", "Coverage"), ("faithful", "Faithfulness"))
 
 
-def read_rows(path: Path) -> list[dict[str, Any]]:
-    """A JSON Lines file as a list of dictionaries; empty if there is no file."""
-    if not path.is_file():
-        return []
-    with path.open(encoding="utf-8") as lines:
-        return [json.loads(line) for line in lines if line.strip()]
-
-
 def prepare(args: argparse.Namespace) -> None:
     """Pair GEE's atomic edits with the edit table and write the IDs and references."""
     records, counts = read_gee(args.gee)
     matches, match_counts = match_edits(records, read_jsonl(args.edits))
     counts.update(match_counts)
-    gold = (
-        set(args.gold_ids.read_text(encoding="utf-8").split()) if args.gold_ids.is_file() else set()
-    )
+    gold = set(read_ids(args.gold_ids)) if args.gold_ids.is_file() else set()
     counts["matched edits in the gold set"] = sum(m.edit.edit_id in gold for m in matches)
 
-    args.gee_dir.mkdir(parents=True, exist_ok=True)
-    (args.gee_dir / "edit_ids.txt").write_text(
-        "".join(f"{m.edit.edit_id}\n" for m in matches), encoding="utf-8"
-    )
-    with (args.gee_dir / "references.jsonl").open("w", encoding="utf-8") as out:
-        for match in matches:
-            out.write(json.dumps(reference_row(match), ensure_ascii=False) + "\n")
+    write_ids((m.edit.edit_id for m in matches), args.gee_dir / "edit_ids.txt")
+    write_rows((reference_row(m) for m in matches), args.gee_dir / "references.jsonl")
     (args.gee_dir / "prepare_counts.json").write_text(
         json.dumps(dict(sorted(counts.items())), indent=2) + "\n", encoding="utf-8"
     )
@@ -93,7 +78,7 @@ def run(args: argparse.Namespace) -> None:
 
     ids = args.gee_dir / "edit_ids.txt"
     if not ids.is_file():
-        raise SystemExit(f"{ids} not found; run the prepare step first")
+        raise SystemExit(f"{ids} not found; run first: python scripts/evaluate_on_gee.py prepare")
     run_system.main(
         ["--system", args.system, "--run", RUN, "--mode", "explain", "--ids", str(ids)]
         + ["--edits", str(args.edits), "--config", str(args.config), "--graph", str(args.graph)]
@@ -164,6 +149,7 @@ def compare_scores(
 
 
 def percent(value: float | None) -> str:
+    """A share as a percentage with one decimal, or a dash for None."""
     return "–" if value is None else f"{100 * value:.1f}"
 
 
@@ -268,16 +254,20 @@ def side_by_side(
 
 def compare(args: argparse.Namespace) -> None:
     """Score GEE and the systems, write the aggregate report and the teacher's sheet."""
-    references = read_rows(args.gee_dir / "references.jsonl")
+    references_path = args.gee_dir / "references.jsonl"
+    references = read_rows(references_path) if references_path.is_file() else []
     if not references:
-        raise SystemExit(f"No references in {args.gee_dir}; run the prepare step first")
+        raise SystemExit(
+            f"No references in {args.gee_dir}; run first: python scripts/evaluate_on_gee.py prepare"
+        )
     wanted = {r["edit_id"] for r in references}
     edits = {e.edit_id: e for e in read_jsonl(args.edits) if e.edit_id in wanted}
     outputs = {}
     for system in args.systems:
-        rows = read_rows(args.outputs / system / f"{RUN}.jsonl")
+        run_path = args.outputs / system / f"{RUN}.jsonl"
+        rows = read_run(run_path) if run_path.is_file() else {}
         if rows:
-            outputs[system] = {row["edit_id"]: row for row in rows}
+            outputs[system] = rows
         else:
             print(
                 f"No GEE outputs for system {system}; run: evaluate_on_gee.py run --system {system}"
@@ -299,6 +289,7 @@ def compare(args: argparse.Namespace) -> None:
 
 
 def main(argv: list[str] | None = None) -> None:
+    """Run one step: prepare, run or compare."""
     parser = argparse.ArgumentParser(description="Compare the systems with GEE's explanations.")
     parser.add_argument("--edits", type=Path, default=Path("data/processed/edits.jsonl"))
     parser.add_argument("--gee-dir", type=Path, default=GEE_DIR, help="IDs, references, sheet")

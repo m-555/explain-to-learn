@@ -1,5 +1,9 @@
 # Explain-to-Learn
 
+[![CI](https://github.com/m-555/explain-to-learn/actions/workflows/ci.yml/badge.svg)](https://github.com/m-555/explain-to-learn/actions/workflows/ci.yml)
+[![Smoke test](https://github.com/m-555/explain-to-learn/actions/workflows/smoke.yml/badge.svg)](https://github.com/m-555/explain-to-learn/actions/workflows/smoke.yml)
+[![Licence: MIT](https://img.shields.io/badge/licence-MIT-blue.svg)](LICENSE)
+
 Turns grammar corrections in English learners' writing into short explanations or hints matched to the learner's CEFR level, grounded in a teacher-built grammar graph.
 
 > **Status: in development.** The pipeline, training and evaluation code is in place; the experiments have not been run yet, so there are no results. See the [roadmap](#roadmap).
@@ -150,18 +154,24 @@ Code items are ticked when the code is done; experiments are ticked when they ha
 ```
 ├── configs/                   # systems.yaml (models, adapters, servers, correctors), grammar terms
 ├── grammar_graph/             # concepts.yaml, errant_map.yaml
-├── src/explain_to_learn/      # edits, splits, graph, prompts, generate, metrics, silver,
-│                              # train_data, human_eval, pipeline, summary, cli
-├── scripts/                   # data download, runs, metrics, silver data, ratings, correction F0.5
-├── train/                     # LoRA configuration and training script
+├── src/explain_to_learn/      # io, edits, splits, graph, prompts, generate, metrics, silver,
+│                              # train_data, preference, human_eval, gee, pipeline, summary, cli
+│   └── annotation/            # local annotation app for the teacher's tasks
+├── scripts/                   # data download, runs, metrics, silver data, ratings, agreement,
+│                              # LLM judge, correction F0.5, GEE comparison, report assets
+├── train/                     # LoRA and DPO configurations and training scripts
 ├── eval/                      # rubric and aggregate results
 ├── demo/                      # Gradio app and its preview stubs
-├── docs/                      # experiment runbook, GPU setup, annotation guide, design decisions
+├── docs/                      # architecture, design decisions, experiment runbook, GPU setup,
+│                              # annotation guide
 ├── notebooks/                 # data statistics and results analysis
 ├── report/                    # ACL-format report
+├── docker/                    # training image for the RTX 5090
 ├── data/splits/               # essay split and gold edit IDs (no learner text)
 └── tests/
 ```
+
+To find your way around the code, start with [docs/architecture.md](docs/architecture.md): what each module and script does, how data flows from the corpora to the report, and every intermediate file. [docs/design_decisions.md](docs/design_decisions.md) explains the reasons behind the method, and [docs/experiments.md](docs/experiments.md) is the runbook for every experiment.
 
 ## Credits
 

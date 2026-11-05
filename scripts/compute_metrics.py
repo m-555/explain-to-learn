@@ -17,11 +17,14 @@ and needs the `model` extra; it is off by default.
 from __future__ import annotations
 
 import argparse
-import json
+from collections.abc import Sequence
 from pathlib import Path
+from typing import TYPE_CHECKING, Any
 
-from explain_to_learn.edits import read_jsonl
+from explain_to_learn.edits import Edit, read_jsonl
+from explain_to_learn.io import open_graph, read_ids, read_run
 from explain_to_learn.metrics import (
+    ContradictionCheck,
     breakdown,
     correction_f05,
     load_terms,
@@ -33,27 +36,26 @@ from explain_to_learn.metrics import (
 )
 from explain_to_learn.prompts import prompt_level
 
+if TYPE_CHECKING:
+    from explain_to_learn.graph import GrammarGraph
+
 COMPARED_METRICS = ("covered", "concept_correct", "faithful", "within_length")
 DEFAULT_COMPARISONS = ("B:A", "C:A", "D:B", "D:C")
 
 
-def open_graph(directory: Path):
-    """Load the grammar graph from its YAML files (see `explain_to_learn.graph`)."""
-    from explain_to_learn.graph import load_graph
-
-    return load_graph(directory / "concepts.yaml", directory / "errant_map.yaml")
+def read_outputs(path: Path) -> dict[str, dict[str, Any]]:
+    """Output rows by edit ID (the last row wins); empty if the run has no file."""
+    return read_run(path) if path.is_file() else {}
 
 
-def read_outputs(path: Path) -> dict[str, dict]:
-    """Output rows by edit ID; the last row wins if an edit was run twice."""
-    if not path.is_file():
-        return {}
-    with path.open(encoding="utf-8") as lines:
-        rows = [json.loads(line) for line in lines if line.strip()]
-    return {row["edit_id"]: row for row in rows}
-
-
-def score_system(outputs, edits, graph, terms, mode, contradiction_check=None) -> list[dict]:
+def score_system(
+    outputs: dict[str, dict[str, Any]],
+    edits: Sequence[Edit],
+    graph: GrammarGraph,
+    terms: Sequence[str],
+    mode: str,
+    contradiction_check: ContradictionCheck | None = None,
+) -> list[dict[str, Any]]:
     """Per-edit scores for one system; `edits` fixes the denominator."""
     items = []
     for edit in edits:
@@ -78,10 +80,16 @@ def score_system(outputs, edits, graph, terms, mode, contradiction_check=None) -
     return items
 
 
-def compute(args: argparse.Namespace, graph) -> dict:
+def compute(args: argparse.Namespace, graph: GrammarGraph) -> dict[str, Any]:
     """All systems' summaries, breakdowns and paired comparisons."""
     all_edits = {edit.edit_id: edit for edit in read_jsonl(args.edits)}
-    ids = [line.strip() for line in args.ids.read_text().splitlines() if line.strip()]
+    ids = read_ids(args.ids)
+    missing = [edit_id for edit_id in ids if edit_id not in all_edits]
+    if missing:
+        raise SystemExit(
+            f"{len(missing)} edit IDs not in {args.edits}, e.g. {missing[0]}; check --ids, or "
+            "build the edit table again with: python -m explain_to_learn.edits build"
+        )
     edits = [all_edits[i] for i in ids]
     terms = load_terms(args.terms)
     check = nli_contradiction_check() if args.contradiction == "nli" else None
@@ -128,6 +136,7 @@ def compute(args: argparse.Namespace, graph) -> dict:
 
 
 def main(argv: list[str] | None = None) -> None:
+    """Score the systems' run files and write `metrics_<run>.md` and `.json`."""
     parser = argparse.ArgumentParser(description="Automatic metrics per system.")
     parser.add_argument("--run", required=True, help="Run name, e.g. gold-explain")
     parser.add_argument("--systems", nargs="+", default=["A", "B", "C", "D", "R"])

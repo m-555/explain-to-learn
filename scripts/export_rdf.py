@@ -61,6 +61,7 @@ def to_rdf(grammar: GrammarGraph) -> Graph:
 
 
 def main(argv: list[str] | None = None) -> int:
+    """Write the grammar graph as Turtle to `--out`; returns the exit code."""
     parser = argparse.ArgumentParser(description="Export the grammar graph as RDF Turtle.")
     parser.add_argument("--concepts", default=DEFAULT_CONCEPTS_PATH)
     parser.add_argument("--map", default=DEFAULT_MAP_PATH)

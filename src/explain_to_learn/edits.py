@@ -114,6 +114,8 @@ CORPUS_FILES = [
 ]
 
 FCE_LEVEL = "B2"
+# Every value of `cefr_level` in the edit table, in level order (`native` is LOCNESS).
+LEVELS = ("A1", "A2", "B1", "B2", "C1", "C2", "native")
 SKIPPED_TYPES = {"noop", "UNK"}
 
 
@@ -250,10 +252,16 @@ def align_essays(
             essay_sentences.append(sentence)
             position += 1
         if taken != target:
-            raise ValueError(f"M2 sentences do not match the text of essay {essay.essay_id}")
+            raise ValueError(
+                f"M2 sentences do not match the text of essay {essay.essay_id}; the JSON and M2 "
+                "files must come from the same BEA-2019 release, so download them again"
+            )
         yield essay, essay_sentences
     if position != len(sentences):
-        raise ValueError(f"{len(sentences) - position} M2 sentences left after the last essay")
+        raise ValueError(
+            f"{len(sentences) - position} M2 sentences left after the last essay; the JSON "
+            "and M2 files must come from the same BEA-2019 release, so download them again"
+        )
 
 
 def essay_edits(corpus: str, split: str, essay: Essay, sentences: list[M2Sentence]) -> list[Edit]:
@@ -297,7 +305,10 @@ def build_edits(raw_dir: str | Path) -> list[Edit]:
         json_path, m2_path = raw_dir / json_file, raw_dir / m2_file
         for path in (json_path, m2_path):
             if not path.is_file():
-                raise FileNotFoundError(f"{path} not found; run scripts/download_data.sh")
+                raise FileNotFoundError(
+                    f"{path} not found; download the corpora with: "
+                    "bash scripts/download_data.sh --accept-licence"
+                )
         essays = read_essays(json_path, corpus)
         for essay, sentences in align_essays(essays, parse_m2(m2_path)):
             rows.extend(essay_edits(corpus, split, essay, sentences))
@@ -320,6 +331,7 @@ def read_jsonl(path: str | Path) -> list[Edit]:
 
 
 def main() -> None:
+    """Build the edit table from `--raw` and write it to `--out`."""
     parser = argparse.ArgumentParser(description="Build the edit table.")
     commands = parser.add_subparsers(dest="command", required=True)
     build = commands.add_parser("build", help="Build the edit table from the raw corpora.")

@@ -182,7 +182,9 @@ def gold_tab(args: argparse.Namespace) -> None:
     def concept_changed(task: GoldTask | None, index: int, concept_id: str | None) -> str:
         return task.concept_view(index, concept_id) if task else ""
 
-    def fill(task: GoldTask | None, index: int, text: str, hint_text: str, used: bool):
+    def fill(
+        task: GoldTask | None, index: int, text: str, hint_text: str, used: bool
+    ) -> tuple[str, str, bool]:
         if task is None:
             raise gr.Error(NOT_STARTED)
         return task.fill_from_draft(index, text, hint_text, used)

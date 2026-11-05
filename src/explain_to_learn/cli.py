@@ -25,10 +25,10 @@ import argparse
 import json
 import sys
 from pathlib import Path
-from typing import Any
 
 from explain_to_learn.edits import read_jsonl
 from explain_to_learn.generate import load_systems
+from explain_to_learn.io import open_graph
 from explain_to_learn.pipeline import (
     LEVELS,
     Annotator,
@@ -46,13 +46,6 @@ from explain_to_learn.summary import essay_edits, markdown, summarize
 
 DEFAULT_CONFIG = Path("configs/systems.yaml")
 DEFAULT_GRAPH = Path("grammar_graph")
-
-
-def open_graph(directory: Path) -> Any:
-    """Load the grammar graph from its folder (needs the `graph` extra)."""
-    from explain_to_learn.graph import load_graph
-
-    return load_graph(directory / "concepts.yaml", directory / "errant_map.yaml")
 
 
 def load_explainer(config: Path, name: str, backend: str | None = None) -> Explainer:

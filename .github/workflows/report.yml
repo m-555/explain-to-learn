@@ -1,0 +1,32 @@
+name: Report
+
+# Compile the ACL-format report whenever it (or this workflow) changes, and keep the PDF
+# as a build artifact. It can also be started by hand from the Actions tab.
+on:
+  push:
+    paths:
+      - "report/**"
+      - ".github/workflows/report.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      # latexmk with pdfLaTeX and BibTeX in a full TeX Live image, as `latexmk -pdf main.tex`
+      # in report/README.md.
+      - name: Compile report/main.tex
+        uses: xu-cheng/latex-action@v4
+        with:
+          root_file: main.tex
+          working_directory: report
+      - name: Upload the PDF
+        uses: actions/upload-artifact@v7
+        with:
+          name: report
+          path: report/main.pdf
+          if-no-files-found: error

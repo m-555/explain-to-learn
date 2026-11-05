@@ -26,21 +26,11 @@ from explain_to_learn.generate import (
     make_backend,
     run_batch,
 )
-
-
-def open_graph(directory: Path):
-    """Load the grammar graph from its YAML files (see `explain_to_learn.graph`)."""
-    from explain_to_learn.graph import load_graph
-
-    return load_graph(directory / "concepts.yaml", directory / "errant_map.yaml")
-
-
-def read_ids(path: Path) -> list[str]:
-    """Edit IDs, one per line."""
-    return [line.strip() for line in path.read_text(encoding="utf-8").splitlines() if line.strip()]
+from explain_to_learn.io import open_graph, read_ids
 
 
 def main(argv: list[str] | None = None) -> None:
+    """Run one system on the edits of `--ids` that are not in its run file yet."""
     parser = argparse.ArgumentParser(description="Run a system over a list of edits.")
     parser.add_argument("--system", required=True, help="System name in the config, e.g. B")
     parser.add_argument("--run", required=True, help="Run name, e.g. gold-explain")
@@ -58,14 +48,22 @@ def main(argv: list[str] | None = None) -> None:
     parser.add_argument("--overwrite", action="store_true", help="Start the run again")
     args = parser.parse_args(argv)
 
-    system = load_systems(args.config)[args.system]
+    systems = load_systems(args.config)
+    if args.system not in systems:
+        parser.error(
+            f"no system {args.system!r} in {args.config}; choose from {', '.join(sorted(systems))}"
+        )
+    system = systems[args.system]
     if args.adapter:
         system["adapter"] = args.adapter
     edits = {edit.edit_id: edit for edit in read_jsonl(args.edits)}
     ids = read_ids(args.ids)[: args.limit]
     missing = [edit_id for edit_id in ids if edit_id not in edits]
     if missing:
-        raise SystemExit(f"{len(missing)} edit IDs not in {args.edits}, e.g. {missing[0]}")
+        raise SystemExit(
+            f"{len(missing)} edit IDs not in {args.edits}, e.g. {missing[0]}; check --ids, or "
+            "build the edit table again with: python -m explain_to_learn.edits build"
+        )
 
     out_path = args.out_dir / args.system / f"{args.run}.jsonl"
     if args.overwrite and out_path.exists():

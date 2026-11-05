@@ -59,7 +59,10 @@ def draw(grammar: GrammarGraph, out_path: str | Path) -> Path:
     """Draw the prerequisite graph to `out_path` and return the path."""
     graph = grammar.graph
     if not nx.is_directed_acyclic_graph(graph):
-        raise ValueError("the prerequisite graph has a cycle; run the graph validator")
+        raise ValueError(
+            "the prerequisite graph has a cycle; find it with: python -m explain_to_learn.graph "
+            "validate"
+        )
     positions = layout(graph)
     columns = 1 + max(x for x, _ in positions.values())
     rows = 1 - min(y for _, y in positions.values())
@@ -139,6 +142,7 @@ def draw(grammar: GrammarGraph, out_path: str | Path) -> Path:
 
 
 def main(argv: list[str] | None = None) -> int:
+    """Draw the prerequisite graph to `--out`; returns the exit code."""
     parser = argparse.ArgumentParser(description="Draw the grammar graph's prerequisite links.")
     parser.add_argument("--concepts", default=DEFAULT_CONCEPTS_PATH)
     parser.add_argument("--map", default=DEFAULT_MAP_PATH)

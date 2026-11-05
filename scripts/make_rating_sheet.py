@@ -23,24 +23,17 @@ Usage:
 from __future__ import annotations
 
 import argparse
-import json
 import random
 from pathlib import Path
 from typing import Any
 
 from explain_to_learn.edits import Edit, read_jsonl
-from explain_to_learn.human_eval import KEY_COLUMNS, RATING_COLUMNS, SHEET_COLUMNS, write_csv
+from explain_to_learn.human_eval import KEY_COLUMNS, RATING_COLUMNS, SHEET_COLUMNS
+from explain_to_learn.io import name_and_path, read_ids, read_run, write_csv
 from explain_to_learn.metrics import shown_text
 from explain_to_learn.prompts import detokenize, prompt_level
 
 SEED = 2025
-
-
-def read_outputs(path: str | Path) -> dict[str, dict[str, Any]]:
-    """One system's generation records by edit ID."""
-    with Path(path).open(encoding="utf-8") as lines:
-        rows = [json.loads(line) for line in lines if line.strip()]
-    return {row["edit_id"]: row for row in rows}
 
 
 def build_items(
@@ -52,7 +45,10 @@ def build_items(
         edit = edits[edit_id]
         for system, rows in sorted(outputs.items()):
             if edit_id not in rows:
-                raise ValueError(f"System {system} has no output for {edit_id}")
+                raise ValueError(
+                    f"System {system} has no output for {edit_id}; run it on the gold IDs "
+                    "first with scripts/run_system.py"
+                )
             row = rows[edit_id]
             mode = row.get("mode", "explain")
             items.append(
@@ -99,17 +95,10 @@ def make_sheets(
     return sheet, second, key
 
 
-def parse_system(value: str) -> tuple[str, Path]:
-    """Read a `NAME=PATH` argument."""
-    name, _, path = value.partition("=")
-    if not name or not path:
-        raise argparse.ArgumentTypeError(f"expected NAME=PATH, got {value!r}")
-    return name, Path(path)
-
-
 def main() -> None:
+    """Write the rating sheet, the second rater's sheet and the key, unless they exist."""
     parser = argparse.ArgumentParser(description="Make the blind rating sheets and the key.")
-    parser.add_argument("--system", type=parse_system, action="append", required=True)
+    parser.add_argument("--system", type=name_and_path, action="append", required=True)
     parser.add_argument("--edits", type=Path, default=Path("data/processed/edits.jsonl"))
     parser.add_argument("--gold-ids", type=Path, default=Path("data/splits/gold_edit_ids.txt"))
     parser.add_argument("--n-edits", type=int, default=100)
@@ -128,9 +117,9 @@ def main() -> None:
     if existing and not args.force:
         parser.error(f"{', '.join(existing)} already exist; use --force to overwrite")
 
-    gold_ids = args.gold_ids.read_text(encoding="utf-8").split()
+    gold_ids = read_ids(args.gold_ids)
     edits = {edit.edit_id: edit for edit in read_jsonl(args.edits)}
-    outputs = {name: read_outputs(path) for name, path in args.system}
+    outputs = {name: read_run(path) for name, path in args.system}
     sheet, second, key = make_sheets(
         gold_ids, edits, outputs, args.n_edits, args.n_second, args.seed
     )

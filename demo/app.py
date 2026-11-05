@@ -19,12 +19,14 @@ from __future__ import annotations
 
 import argparse
 import os
+from collections.abc import Callable
 from dataclasses import dataclass
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from stubs import StubAnnotator, StubBackend, StubCorrector
 
 from explain_to_learn.generate import load_systems
+from explain_to_learn.io import open_graph
 from explain_to_learn.pipeline import (
     LEVELS,
     Annotator,
@@ -39,13 +41,17 @@ from explain_to_learn.pipeline import (
 )
 from explain_to_learn.summary import markdown, summarize
 
+if TYPE_CHECKING:
+    import gradio as gr
+
 try:  # On a ZeroGPU Space, a GPU is attached only while a decorated function runs.
     import spaces
 
     gpu = spaces.GPU(duration=120)
 except ImportError:
 
-    def gpu(function):
+    def gpu(function: Callable[..., Any]) -> Callable[..., Any]:
+        """Run the function as it is when ZeroGPU's `spaces` package is not installed."""
         return function
 
 
@@ -84,6 +90,7 @@ def env(name: str, default: str | None = None) -> str | None:
 
 
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
+    """The demo's settings: command-line options, defaulting to DEMO_<NAME> variables."""
     parser = argparse.ArgumentParser(description="Explain-to-Learn demo.")
     parser.add_argument("--fake", action="store_true", default=env("FAKE") == "1")
     parser.add_argument("--config", default=env("CONFIG", "configs/systems.yaml"))
@@ -101,7 +108,13 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
 
 def system_settings(args: argparse.Namespace) -> dict:
     """The explanation system from the config, with the command-line overrides."""
-    system = dict(load_systems(args.config)[args.system])
+    systems = load_systems(args.config)
+    if args.system not in systems:
+        raise SystemExit(
+            f"error: no system {args.system!r} in {args.config}; "
+            f"choose from {', '.join(sorted(systems))}"
+        )
+    system = dict(systems[args.system])
     if args.backend:
         system["backend"] = args.backend
     if args.model:
@@ -160,32 +173,38 @@ class Demo:
 
 def build_demo(args: argparse.Namespace) -> Demo:
     """Load the models named in the arguments; with --fake, use stubs."""
-    from explain_to_learn.graph import load_graph
-
-    graph = load_graph(f"{args.graph}/concepts.yaml", f"{args.graph}/errant_map.yaml")
+    graph = open_graph(args.graph)
     if args.fake:
         return Demo(StubCorrector(), StubAnnotator(), Explainer(StubBackend()), graph)
-    corrector = make_corrector(load_correctors(args.config)[args.corrector])
+    correctors = load_correctors(args.config)
+    if args.corrector not in correctors:
+        raise SystemExit(
+            f"error: no corrector {args.corrector!r} in {args.config}; "
+            f"choose from {', '.join(sorted(correctors))}"
+        )
+    corrector = make_corrector(correctors[args.corrector])
     explainer = Explainer.from_system(args.system, system_settings(args))
     return Demo(corrector, ErrantAnnotator(), explainer, graph)
 
 
-def build_ui(demo: Demo, fake: bool = False):
+def build_ui(demo: Demo, fake: bool = False) -> gr.Blocks:
     """The Gradio interface: a feedback tab for learners and a summary tab for teachers."""
     import gradio as gr
 
     @gpu
-    def feedback(text, auto_correct, corrected, level, mode):
+    def feedback(
+        text: str, auto_correct: bool, corrected: str, level: str, mode: str
+    ) -> tuple[str, str]:
         return demo.feedback(text, auto_correct, corrected, level, mode)
 
     @gpu
-    def summary(text, auto_correct, corrected, level):
+    def summary(text: str, auto_correct: bool, corrected: str, level: str) -> str:
         return demo.summary(text, auto_correct, corrected, level)
 
-    def show_correction(auto_correct: bool):
+    def show_correction(auto_correct: bool) -> gr.Textbox:
         return gr.Textbox(visible=not auto_correct)
 
-    def text_inputs(label: str):
+    def text_inputs(label: str) -> tuple[gr.Textbox, gr.Checkbox, gr.Textbox]:
         text = gr.Textbox(label=label, lines=4, max_length=MAX_CHARS)
         auto_correct = gr.Checkbox(value=True, label="Correct the text automatically")
         corrected = gr.Textbox(
@@ -225,6 +244,7 @@ def build_ui(demo: Demo, fake: bool = False):
 
 
 def main() -> None:
+    """Start the demo on `--port`, with the models or, with --fake, the stubs."""
     args = parse_args()
     build_ui(build_demo(args), args.fake).launch(server_port=args.port, share=args.share)
 

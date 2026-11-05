@@ -35,13 +35,12 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
 
-from explain_to_learn.edits import CORPUS_FILES, align_essays, parse_m2, read_essays
+from explain_to_learn.edits import CORPUS_FILES, LEVELS, align_essays, parse_m2, read_essays
 from explain_to_learn.metrics import errant_compare, errant_parallel
 from explain_to_learn.pipeline import Corrector, load_correctors, make_corrector
 from explain_to_learn.prompts import detokenize
 from explain_to_learn.splits import GOLD_CORPORA
 
-LEVELS = ("A1", "A2", "B1", "B2", "C1", "C2", "native")
 CHUNK = 64
 
 
@@ -61,6 +60,7 @@ def m2_blocks(path: str | Path) -> list[str]:
 
 
 def write_m2(blocks: list[str], path: Path) -> None:
+    """Write M2 sentence blocks to a file, separated by blank lines."""
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text("\n\n".join(blocks) + "\n", encoding="utf-8")
 
@@ -74,10 +74,16 @@ def dev_sentences(raw_dir: Path) -> list[DevSentence]:
         json_path, m2_path = raw_dir / json_file, raw_dir / m2_file
         for path in (json_path, m2_path):
             if not path.is_file():
-                raise FileNotFoundError(f"{path} not found; run scripts/download_data.sh")
+                raise FileNotFoundError(
+                    f"{path} not found; download the corpora with: "
+                    "bash scripts/download_data.sh --accept-licence"
+                )
         parsed, blocks = parse_m2(m2_path), m2_blocks(m2_path)
         if len(parsed) != len(blocks):
-            raise ValueError(f"{m2_path}: {len(parsed)} sentences but {len(blocks)} blocks")
+            raise ValueError(
+                f"{m2_path}: {len(parsed)} sentences but {len(blocks)} blocks; "
+                "download the corpora again"
+            )
         position = 0
         for essay, essay_sentences in align_essays(read_essays(json_path, corpus), parsed):
             for sentence in essay_sentences:
@@ -128,7 +134,10 @@ def score(sentences: list[DevSentence], run_dir: Path) -> dict:
     errant_parallel(run_dir / "orig.txt", run_dir / "hyp.txt", hyp_m2)
     hyp_blocks = m2_blocks(hyp_m2)
     if len(hyp_blocks) != len(sentences):
-        raise ValueError(f"{hyp_m2} has {len(hyp_blocks)} sentences, expected {len(sentences)}")
+        raise ValueError(
+            f"{hyp_m2} has {len(hyp_blocks)} sentences, expected {len(sentences)}; "
+            "correct them again with --overwrite"
+        )
     write_m2([s.reference for s in sentences], ref_m2)
     results = {"overall": {"sentences": len(sentences), **errant_compare(hyp_m2, ref_m2)}}
     results["by_level"] = {}
@@ -176,6 +185,7 @@ def markdown_report(results: dict) -> str:
 
 
 def main(argv: list[str] | None = None) -> None:
+    """Correct the dev sentences (resuming), score them and write the result files."""
     parser = argparse.ArgumentParser(description="Correction F0.5 on W&I+LOCNESS dev.")
     parser.add_argument("--run", required=True, help="Run name, e.g. gec-t5-small")
     parser.add_argument("--corrector", default="gec", help="Corrector in the config")
@@ -196,7 +206,10 @@ def main(argv: list[str] | None = None) -> None:
         (run_dir / "hyp.txt").unlink(missing_ok=True)
     correctors = load_correctors(args.config)
     if args.corrector not in correctors:
-        parser.error(f"no corrector {args.corrector!r} in {args.config}")
+        parser.error(
+            f"no corrector {args.corrector!r} in {args.config}; "
+            f"choose from {', '.join(sorted(correctors))}"
+        )
     settings = correctors[args.corrector]
     hyp_path = run_dir / "hyp.txt"
     done = len(hyp_path.read_text(encoding="utf-8").splitlines()) if hyp_path.exists() else 0

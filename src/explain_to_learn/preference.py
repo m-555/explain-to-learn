@@ -36,8 +36,9 @@ from pathlib import Path
 from typing import Any
 
 from explain_to_learn.generate import OUTPUT_FIELDS
+from explain_to_learn.io import read_rows, write_rows
 from explain_to_learn.prompts import build_target
-from explain_to_learn.train_data import read_rows, validation_essays, write_rows
+from explain_to_learn.train_data import validation_essays
 
 SEED = 42
 # Preference data is small, so a larger share than for SFT keeps the validation set usable.
@@ -113,6 +114,7 @@ def build_preferences(
 
 
 def main(argv: list[str] | None = None) -> None:
+    """Build the DPO pairs and write `train.jsonl` and `validation.jsonl` to `--out`."""
     parser = argparse.ArgumentParser(description="Build DPO pairs from teacher preferences.")
     parser.add_argument(
         "--preferences", type=Path, default=Path("outputs/annotations/preferences.jsonl")
@@ -123,14 +125,20 @@ def main(argv: list[str] | None = None) -> None:
     args = parser.parse_args(argv)
 
     if not args.preferences.is_file():
-        raise SystemExit(f"{args.preferences} not found; export the preference annotations first")
+        raise SystemExit(
+            f"{args.preferences} not found; judge pairs first in the annotation app: "
+            "python -m explain_to_learn.annotation --task preferences"
+        )
     splits, counts = build_preferences(
         read_rows(args.preferences), args.validation_share, args.seed
     )
     for name, count in sorted(counts.items()):
         print(f"{name}: {count}")
     if not counts["pairs"]:
-        raise SystemExit("No preference pairs to train on; nothing written")
+        raise SystemExit(
+            "No preference pairs to train on (every judgement is a tie, both bad or the same "
+            "output); nothing written. Judge more pairs in the annotation app."
+        )
     for split, examples in splits.items():
         write_rows(examples, args.out / f"{split}.jsonl")
         print(f"{split}: {len(examples)} pairs -> {args.out / f'{split}.jsonl'}")

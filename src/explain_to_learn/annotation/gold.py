@@ -26,7 +26,6 @@ The field names follow the silver training rows (`silver.filter_silver`).
 
 from __future__ import annotations
 
-import json
 from collections.abc import Sequence
 from operator import itemgetter
 from pathlib import Path
@@ -37,15 +36,10 @@ from explain_to_learn.annotation.store import Store
 from explain_to_learn.annotation.task import Task
 from explain_to_learn.edits import Edit, read_jsonl
 from explain_to_learn.generate import OUTPUT_FIELDS
+from explain_to_learn.io import open_graph, read_ids, read_rows
 from explain_to_learn.prompts import detokenize, prompt_level
 
 OUTPUT_FILE = "gold_explanations.jsonl"
-
-
-def read_ids(path: str | Path) -> list[str]:
-    """Edit IDs, one per line."""
-    lines = Path(path).read_text(encoding="utf-8").splitlines()
-    return [line.strip() for line in lines if line.strip()]
 
 
 def read_drafts(paths: Sequence[str | Path]) -> dict[str, dict[str, str]]:
@@ -56,18 +50,14 @@ def read_drafts(paths: Sequence[str | Path]) -> dict[str, dict[str, str]]:
     """
     drafts: dict[str, dict[str, str]] = {}
     for path in paths:
-        with Path(path).open(encoding="utf-8") as lines:
-            for line in lines:
-                if not line.strip():
-                    continue
-                row = json.loads(line)
-                parsed = row.get("parsed")
-                if not parsed:  # the reply was not valid JSON
-                    continue
-                draft = drafts.setdefault(row["edit_id"], dict.fromkeys(OUTPUT_FIELDS, ""))
-                for field in OUTPUT_FIELDS:
-                    if not draft[field] and parsed.get(field):
-                        draft[field] = parsed[field]
+        for row in read_rows(path):
+            parsed = row.get("parsed")
+            if not parsed:  # the reply was not valid JSON
+                continue
+            draft = drafts.setdefault(row["edit_id"], dict.fromkeys(OUTPUT_FIELDS, ""))
+            for field in OUTPUT_FIELDS:
+                if not draft[field] and parsed.get(field):
+                    draft[field] = parsed[field]
     return drafts
 
 
@@ -91,7 +81,7 @@ class GoldTask(Task):
         drafts_paths: Sequence[str | Path] = (),
     ) -> None:
         try:
-            from explain_to_learn.graph import load_graph
+            self.graph = open_graph(graph_dir)
         except ImportError as exc:
             raise ValueError(
                 'The gold task needs the graph extra: pip install -e ".[graph]"'
@@ -102,11 +92,10 @@ class GoldTask(Task):
         missing = [edit_id for edit_id in ids if edit_id not in edits]
         if missing:
             raise ValueError(
-                f"{len(missing)} gold edits are not in {edits_path}, e.g. {missing[0]}"
+                f"{len(missing)} gold edits are not in {edits_path}, e.g. {missing[0]}; build "
+                "the edit table first (README, quick start)"
             )
         self.edits = [edits[edit_id] for edit_id in ids]
-        graph_dir = Path(graph_dir)
-        self.graph = load_graph(graph_dir / "concepts.yaml", graph_dir / "errant_map.yaml")
         self.has_drafts = bool(drafts_paths)
         self.drafts = read_drafts(drafts_paths)
         self.store = Store(Path(out_dir) / OUTPUT_FILE, itemgetter("edit_id"), ids)

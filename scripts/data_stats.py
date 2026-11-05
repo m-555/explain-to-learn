@@ -12,9 +12,8 @@ import argparse
 from collections import Counter
 from pathlib import Path
 
-from explain_to_learn.edits import Edit, read_jsonl
+from explain_to_learn.edits import LEVELS, Edit, read_jsonl
 
-LEVELS = ["A1", "A2", "B1", "B2", "C1", "C2", "native"]
 SPLITS = ["train", "dev", "test"]
 TOP_N = 15
 
@@ -102,6 +101,7 @@ def stats_markdown(edits: list[Edit]) -> str:
 
 
 def main() -> None:
+    """Write the statistics of the edit table to `--out`."""
     parser = argparse.ArgumentParser(description="Write aggregate edit statistics.")
     parser.add_argument("--edits", type=Path, default=Path("data/processed/edits.jsonl"))
     parser.add_argument("--out", type=Path, default=Path("eval/results/data_stats.md"))

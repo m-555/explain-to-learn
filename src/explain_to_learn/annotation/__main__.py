@@ -14,18 +14,13 @@ from __future__ import annotations
 import argparse
 from pathlib import Path
 
+from explain_to_learn.io import name_and_path
+
 TASKS = ("gold", "ratings", "second-rater", "silver", "preferences")
 
 
-def name_and_path(value: str) -> tuple[str, Path]:
-    """Read a `NAME=PATH` argument."""
-    name, _, path = value.partition("=")
-    if not name or not path:
-        raise argparse.ArgumentTypeError(f"expected NAME=PATH, got {value!r}")
-    return name, Path(path)
-
-
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
+    """The app's options; without --task, every task gets a tab."""
     parser = argparse.ArgumentParser(
         prog="python -m explain_to_learn.annotation",
         description="Local annotation app: gold explanations, ratings, hand-check, preferences.",
@@ -83,6 +78,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
 
 
 def main(argv: list[str] | None = None) -> None:
+    """Start the app on 127.0.0.1 at `--port`."""
     args = parse_args(argv)
     from explain_to_learn.annotation.app import build_app  # needs the `demo` extra (Gradio)
 
