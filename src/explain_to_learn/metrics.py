@@ -33,6 +33,7 @@ import json
 import random
 import re
 import subprocess
+import sys
 import tempfile
 from collections import defaultdict
 from collections.abc import Callable, Iterable, Mapping, Sequence
@@ -446,27 +447,31 @@ def parse_errant_compare(output: str) -> dict:
     raise ValueError("No score table in errant_compare output")
 
 
+def _run_errant(command: str, *args: str) -> subprocess.CompletedProcess:
+    """Run an ERRANT command (`parallel_to_m2` or `compare_m2`) with this Python.
+
+    Calling the command module's `main()` through `sys.executable` works whether or
+    not the environment's scripts folder is on PATH (for example on Windows without
+    an activated virtual environment), unlike calling `errant_parallel` by name.
+    """
+    code = f"from errant.commands.{command} import main; main()"
+    return subprocess.run(
+        [sys.executable, "-c", code, *args], check=True, capture_output=True, text=True
+    )
+
+
 def errant_parallel(orig: str | Path, hyp: str | Path, out_m2: str | Path) -> None:
     """Write the M2 file of corrected sentences with ERRANT's `errant_parallel`.
 
     `orig` and `hyp` are text files with one tokenised sentence per line (original
     and system-corrected). Needs the `data` extra (ERRANT and a spaCy English model).
     """
-    subprocess.run(
-        ["errant_parallel", "-orig", str(orig), "-cor", str(hyp), "-out", str(out_m2)],
-        check=True,
-        capture_output=True,
-    )
+    _run_errant("parallel_to_m2", "-orig", str(orig), "-cor", str(hyp), "-out", str(out_m2))
 
 
 def errant_compare(hyp_m2: str | Path, ref_m2: str | Path) -> dict:
     """Span-based correction scores of a hypothesis M2 file against a reference M2 file."""
-    result = subprocess.run(
-        ["errant_compare", "-hyp", str(hyp_m2), "-ref", str(ref_m2)],
-        check=True,
-        capture_output=True,
-        text=True,
-    )
+    result = _run_errant("compare_m2", "-hyp", str(hyp_m2), "-ref", str(ref_m2))
     return parse_errant_compare(result.stdout)
 
 

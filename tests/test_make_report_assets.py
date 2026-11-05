@@ -109,12 +109,12 @@ def results(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
     edits = [make_edit(i) for i in range(60)]
     write_jsonl(edits, tmp_path / "edits.jsonl")
-    (tmp_path / "gold.txt").write_text("".join(f"{e.edit_id}\n" for e in edits))
+    (tmp_path / "gold.txt").write_text("".join(f"{e.edit_id}\n" for e in edits), encoding="utf-8")
     for system in SYSTEMS:
         out = tmp_path / "outputs" / system / "gold.jsonl"
         out.parent.mkdir(parents=True)
         rows = [output_row(system, edit, i) for i, edit in enumerate(edits)]
-        out.write_text("".join(json.dumps(row) + "\n" for row in rows))
+        out.write_text("".join(json.dumps(row) + "\n" for row in rows), encoding="utf-8")
 
     compute_metrics = load_script("compute_metrics")
     monkeypatch.setattr(compute_metrics, "open_graph", lambda directory: FakeGraph())
@@ -152,7 +152,9 @@ def results(tmp_path, monkeypatch):
     first = read_ratings(human / "ratings_rater1.csv")
     for name, second in (("raters", "rater2"), ("judge", "llm_judge")):
         rows = agreement.agreement_rows(first, read_ratings(human / f"ratings_{second}.csv"))
-        (tmp_path / "results" / f"agreement_{name}.md").write_text(agreement.markdown(name, rows))
+        (tmp_path / "results" / f"agreement_{name}.md").write_text(
+            agreement.markdown(name, rows), encoding="utf-8"
+        )
     return tmp_path
 
 
@@ -196,8 +198,8 @@ def test_no_result_files_writes_nothing(tmp_path, capsys):
 def test_results_table_tables_and_figures_from_the_fixture(results):
     written = assets.main(results_args(results))
 
-    metrics = json.loads((results / "results" / "metrics_gold.json").read_text())
-    table = (results / "assets" / "results_table.md").read_text()
+    metrics = json.loads((results / "results" / "metrics_gold.json").read_text(encoding="utf-8"))
+    table = (results / "assets" / "results_table.md").read_text(encoding="utf-8")
     lines = table.splitlines()
     assert lines[0] == "| Metric | A | B | C | D | R |"
     coverage = next(line for line in lines if line.startswith("| Coverage"))
@@ -209,12 +211,12 @@ def test_results_table_tables_and_figures_from_the_fixture(results):
     assert "60 gold edits" in table and "40 rated items per system" in table
 
     tables = results / "assets" / "tables"
-    main_table = (tables / "results_main.tex").read_text()
+    main_table = (tables / "results_main.tex").read_text(encoding="utf-8")
     assert "\\toprule" in main_table and "\\bottomrule" in main_table
     assert main_table.count("\\midrule") == 2  # after the header and between the sections
-    differences = (tables / "paired_differences.tex").read_text()
+    differences = (tables / "paired_differences.tex").read_text(encoding="utf-8")
     assert "B$-$A & C$-$A & D$-$C & D$-$B" in differences
-    assert "Cohen's kappa" in (tables / "agreement.tex").read_text()
+    assert "Cohen's kappa" in (tables / "agreement.tex").read_text(encoding="utf-8")
 
     figures = {path.name for path in (results / "figures").iterdir()}
     assert figures == {
@@ -231,7 +233,7 @@ def test_results_table_tables_and_figures_from_the_fixture(results):
         assert (results / "figures" / name).read_bytes().startswith(PNG)
     assert len(written) == len(figures) + 4  # the Markdown table and three LaTeX tables
     for path in [results / "assets" / "results_table.md", *tables.iterdir()]:
-        assert "zebra" not in path.read_text()
+        assert "zebra" not in path.read_text(encoding="utf-8")
 
 
 def test_metrics_alone_give_the_automatic_rows(results):
@@ -240,7 +242,7 @@ def test_metrics_alone_give_the_automatic_rows(results):
         args[args.index(option) + 1] = str(results / "missing")
     assets.main(args)
 
-    table = (results / "assets" / "results_table.md").read_text()
+    table = (results / "assets" / "results_table.md").read_text(encoding="utf-8")
     assert "| Coverage (%) |" in table and "Rule correct" not in table
     figures = {path.name for path in (results / "figures").iterdir()}
     assert figures == {
@@ -257,7 +259,7 @@ def test_agreement_alone_gives_no_results_table(results):
     assets.main(args)
 
     assert not (results / "assets" / "results_table.md").exists()
-    agreement = (results / "assets" / "tables" / "agreement.tex").read_text()
+    agreement = (results / "assets" / "tables" / "agreement.tex").read_text(encoding="utf-8")
     assert "\\multicolumn{4}{c}{Rater 2 vs rater 1}" in agreement
     assert "\\cmidrule(lr){2-5} \\cmidrule(lr){6-9}" in agreement
     assert {path.name for path in (results / "figures").iterdir()} == {"judge_agreement.png"}
@@ -310,7 +312,8 @@ def test_read_agreement_parses_the_agreement_table(tmp_path):
         "| --- | ---: | ---: | ---: | ---: |\n"
         "| rule_correct | 50 | 0.80 | 0.61 | 0.72 |\n"
         "| error_located | 0 | n/a | n/a | n/a |\n"
-        "| invented_rule | 50 | 0.96 | 0.48 | – |\n"
+        "| invented_rule | 50 | 0.96 | 0.48 | – |\n",
+        encoding="utf-8",
     )
     table = assets.read_agreement(path)
 
