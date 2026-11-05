@@ -5,6 +5,9 @@ nor ERRANT. All sentences are invented.
 """
 
 import json
+import os
+import subprocess
+import sys
 import tomllib
 from pathlib import Path
 
@@ -113,6 +116,27 @@ def test_summary_of_an_essay_in_the_edit_table(capsys, tmp_path):
     assert "sentence 1, word 2: *has* → *have*" in out
     with pytest.raises(SystemExit, match="no edits for essay text-1"):
         cli.main(["summary", "--essay", "text-1", "--edits", str(tmp_path / "edits.jsonl"), *GRAPH])
+
+
+def test_summary_prints_utf8_when_the_console_code_page_lacks_the_arrow(tmp_path):
+    """On Windows a pipe defaults to a code page without '→'; the command must still work."""
+    edits = make_edits(
+        ["I", "has", "a", "cat", "."],
+        ["I", "have", "a", "cat", "."],
+        [Span(1, 2, "have", "R:VERB:SVA")],
+        "native",
+        text_id="9",
+    )
+    write_jsonl(edits, tmp_path / "edits.jsonl")
+    args = ["summary", "--essay", "text-9", "--edits", str(tmp_path / "edits.jsonl"), *GRAPH]
+
+    result = subprocess.run(
+        [sys.executable, "-m", "explain_to_learn.cli", *args],
+        capture_output=True,
+        env=os.environ | {"PYTHONIOENCODING": "cp1252"},
+    )
+    assert result.returncode == 0, result.stderr.decode("utf-8", "replace")
+    assert "*has* → *have*" in result.stdout.decode("utf-8")
 
 
 @pytest.mark.parametrize(

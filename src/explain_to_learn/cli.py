@@ -162,6 +162,10 @@ def parser() -> argparse.ArgumentParser:
 
 def main(argv: list[str] | None = None) -> int:
     """Entry point of the `explain-to-learn` command."""
+    # Learner text and the summary's arrows are not all in the Windows code page, so
+    # write UTF-8 whatever the console or pipe would use by default.
+    if hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(encoding="utf-8")
     cli = parser()
     args = cli.parse_args(argv)
     if args.command == "summary":
