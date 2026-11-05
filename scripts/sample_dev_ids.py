@@ -16,7 +16,8 @@ import random
 from pathlib import Path
 
 from explain_to_learn.edits import Edit, read_jsonl
-from explain_to_learn.splits import GOLD_CORPORA, write_ids
+from explain_to_learn.io import read_ids, write_ids
+from explain_to_learn.splits import GOLD_CORPORA
 
 
 def sample_dev_ids(edits: list[Edit], gold_ids: set[str], n: int, seed: int = 0) -> list[str]:
@@ -38,7 +39,7 @@ def main(argv: list[str] | None = None) -> None:
     parser.add_argument("--out", type=Path, default=Path("outputs/dev_ids.txt"))
     args = parser.parse_args(argv)
 
-    gold = set(args.gold_ids.read_text(encoding="utf-8").split())
+    gold = set(read_ids(args.gold_ids))
     ids = sample_dev_ids(read_jsonl(args.edits), gold, args.n, args.seed)
     write_ids(ids, args.out)
     print(f"Wrote {len(ids)} dev edit IDs to {args.out}")

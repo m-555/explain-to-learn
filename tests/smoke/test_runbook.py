@@ -48,7 +48,7 @@ from explain_to_learn.annotation.handcheck import HandcheckTask  # noqa: E402
 from explain_to_learn.annotation.preferences import PreferenceTask  # noqa: E402
 from explain_to_learn.annotation.ratings import RatingTask  # noqa: E402
 from explain_to_learn.edits import read_jsonl  # noqa: E402
-from explain_to_learn.human_eval import read_csv  # noqa: E402
+from explain_to_learn.io import read_csv  # noqa: E402
 from explain_to_learn.prompts import detokenize  # noqa: E402
 
 from . import corpus, fake_server  # noqa: E402
