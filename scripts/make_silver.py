@@ -12,7 +12,7 @@ Steps:
 Usage:
     python scripts/make_silver.py generate --n 8000 --workers 16
     python scripts/make_silver.py filter
-    python scripts/make_silver.py score
+    python scripts/make_silver.py score --handcheck outputs/annotations/silver_handcheck.csv
 """
 
 from __future__ import annotations
@@ -124,6 +124,10 @@ def main(argv: list[str] | None = None) -> None:
     parser.add_argument("--seed", type=int, default=0)
     parser.add_argument("--results", type=Path, default=RESULTS_DIR)
     parser.add_argument("--handcheck", type=Path, default=Path("outputs/silver_handcheck.csv"))
+    # --handcheck is also accepted after `filter` and `score`, as the annotation guide
+    # writes it; SUPPRESS keeps the value given before the step when it is not repeated.
+    handcheck = argparse.ArgumentParser(add_help=False)
+    handcheck.add_argument("--handcheck", type=Path, default=argparse.SUPPRESS)
     steps = parser.add_subparsers(dest="step", required=True)
 
     gen = steps.add_parser("generate", help="Run the teacher on training edits.")
@@ -138,13 +142,17 @@ def main(argv: list[str] | None = None) -> None:
     gen.add_argument("--workers", type=int, default=16, help="Parallel requests")
     gen.set_defaults(func=generate)
 
-    filt = steps.add_parser("filter", help="Filter teacher outputs, export the hand-check.")
+    filt = steps.add_parser(
+        "filter", parents=[handcheck], help="Filter teacher outputs, export the hand-check."
+    )
     filt.add_argument("--raw", type=Path, default=SILVER_DIR / "teacher.jsonl")
     filt.add_argument("--kept", type=Path, default=SILVER_DIR / "kept.jsonl")
     filt.add_argument("--handcheck-n", type=int, default=200)
     filt.set_defaults(func=filter_outputs)
 
-    sc = steps.add_parser("score", help="Accuracy of the filled-in hand-check CSV.")
+    sc = steps.add_parser(
+        "score", parents=[handcheck], help="Accuracy of the filled-in hand-check CSV."
+    )
     sc.set_defaults(func=score)
 
     args = parser.parse_args(argv)

@@ -6,6 +6,7 @@ invented sentences.
 
 import csv
 import importlib.util
+import json
 from pathlib import Path
 
 import pytest
@@ -94,6 +95,27 @@ def test_make_silver_score_reads_the_marks(handcheck_file, tmp_path, monkeypatch
 
     assert "Hand-check accuracy 100.0%" in capsys.readouterr().out
     assert (tmp_path / "results" / "silver_handcheck.json").exists()
+
+
+def test_make_silver_score_takes_the_marks_after_the_step(
+    handcheck_file, tmp_path, monkeypatch, capsys
+):
+    """The order the annotation guide documents: `score --handcheck <marks>`."""
+    task = HandcheckTask(handcheck_file, tmp_path / "annotations")
+    for index in range(len(task)):
+        task.save(index, "1" if index else "0", "")
+    spec = importlib.util.spec_from_file_location(
+        "make_silver", ROOT / "scripts" / "make_silver.py"
+    )
+    make_silver = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(make_silver)
+
+    marks = tmp_path / "annotations" / "silver_handcheck.csv"
+    results = tmp_path / "results"
+    make_silver.main(["--results", str(results), "score", "--handcheck", str(marks)])
+
+    score = json.loads((results / "silver_handcheck.json").read_text())
+    assert (score["rated"], score["correct"]) == (len(task), len(task) - 1)
 
 
 def test_view_values_and_resume(handcheck_file, tmp_path):

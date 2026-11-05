@@ -1,0 +1,27 @@
+name: Smoke test
+
+on:
+  push:
+  pull_request:
+
+# Runs every step of the experiment runbook (docs/experiments.md) on the invented corpus
+# in tests/smoke/, against a fake model server: no GPU and no model downloads. ERRANT and
+# spaCy's small English model are installed for the correction step; pip's cache, which
+# setup-python restores, keeps the model's wheel between runs.
+jobs:
+  runbook:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: pyproject.toml
+      - name: Install
+        run: |
+          pip install -e ".[dev,graph,generate,data]"
+          python -m spacy download en_core_web_sm
+      - name: Runbook smoke test
+        run: pytest -m smoke -q -rs tests/smoke

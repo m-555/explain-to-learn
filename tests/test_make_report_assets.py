@@ -252,6 +252,30 @@ def test_metrics_alone_give_the_automatic_rows(results):
     }
 
 
+def test_default_inputs_are_where_the_runbook_writes_them(results, monkeypatch):
+    """Without path options, every input is read from where its own tool saves it."""
+    from explain_to_learn.annotation.__main__ import parse_args
+    from explain_to_learn.annotation.ratings import ratings_path
+
+    monkeypatch.chdir(results)
+    app = parse_args([])
+    human = Path("outputs/human_eval")
+    ratings = ratings_path(app.out_dir, app.rater)  # the annotation app's ratings file
+    ratings.parent.mkdir(parents=True)
+    (human / "ratings_rater1.csv").rename(ratings)
+    Path("eval/results").mkdir(parents=True)
+    Path("results/metrics_gold.json").rename("eval/results/metrics_gold-explain.json")
+    for name in ("raters", "judge"):  # the --out paths of scripts/agreement.py
+        Path(f"results/agreement_{name}.md").rename(f"eval/results/agreement_{name}.md")
+
+    assets.main(["--figures-dir", "figures", "results", "--min-group", "5", "--resamples", "300"])
+
+    figures = {path.name for path in Path("figures").iterdir()}
+    assert {"human_by_level.png", "judge_vs_rater_means.png"} <= figures
+    agreement = Path("report/tables/agreement.tex").read_text(encoding="utf-8")
+    assert "\\cmidrule(lr){2-5} \\cmidrule(lr){6-9}" in agreement  # raters and judge
+
+
 def test_agreement_alone_gives_no_results_table(results):
     args = results_args(results)
     for option in ("--metrics", "--ratings"):

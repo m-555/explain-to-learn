@@ -1,0 +1,71 @@
+[
+ {
+  "text": "<b>Source:</b> My sister like dog very much.<br><b>Target:</b> My sister likes dogs very much.<br><br><b>Explanation:</b><br>The word 'like' changes to 'likes' because 'my sister' is one person.<br>Error type: subject-verb agreement<br>The word 'dog' changes to 'dogs' because she likes dogs in general.<br>Error type: noun number",
+  "edits": "['replace', 'like', 'likes']<br>['replace', 'dog', 'dogs']",
+  "id": 1,
+  "annotator": 1,
+  "annotation_id": 901,
+  "created_at": "2026-01-01T00:00:00.000000Z",
+  "updated_at": "2026-01-01T00:00:00.000000Z",
+  "lead_time": 10.0,
+  "all_correct": "There is no error in the explanation(s) above."
+ },
+ {
+  "text": "<b>Source:</b> We was happy at the party.<br><b>Target:</b> We were happy at the party.<br><br><b>Explanation:</b><br>The word 'was' changes to 'were' because the party is in the past.<br>Error type: verb tense",
+  "edits": "['replace', 'was', 'were']",
+  "id": 2,
+  "annotator": 1,
+  "annotation_id": 902,
+  "created_at": "2026-01-01T00:00:00.000000Z",
+  "updated_at": "2026-01-01T00:00:00.000000Z",
+  "lead_time": 10.0,
+  "label": [
+   {
+    "start": "/text()[1]",
+    "startOffset": 0,
+    "end": "/text()[1]",
+    "endOffset": 66,
+    "globalOffsets": {
+     "start": 85,
+     "end": 151
+    },
+    "text": "The word 'was' changes to 'were' because the party is in the past.",
+    "labels": [
+     "Wrong error explanation"
+    ]
+   }
+  ]
+ },
+ {
+  "text": "<b>Source:</b> Nowadays many people work from home.<br><b>Target:</b> Nowadays, many people work from home.<br><br><b>Explanation:</b><br>A comma is inserted after 'Nowadays' because it introduces the sentence.<br>Error type: punctuation",
+  "edits": "['insert', '', ',']",
+  "id": 3,
+  "annotator": 1,
+  "annotation_id": 903,
+  "created_at": "2026-01-01T00:00:00.000000Z",
+  "updated_at": "2026-01-01T00:00:00.000000Z",
+  "lead_time": 10.0,
+  "all_correct": "There is no error in the explanation(s) above."
+ },
+ {
+  "text": "<b>Source:</b> The cat sleeps in the sofa every afternoon.<br><b>Target:</b> The cat sleeps on the sofa every afternoon.<br><br><b>Explanation:</b><br>The word 'in' changes to 'on' because we sit on a sofa.<br>Error type: preposition",
+  "edits": "['replace', 'in', 'on']",
+  "id": 4,
+  "annotator": 1,
+  "annotation_id": 904,
+  "created_at": "2026-01-01T00:00:00.000000Z",
+  "updated_at": "2026-01-01T00:00:00.000000Z",
+  "lead_time": 10.0,
+  "all_correct": "There is no error in the explanation(s) above."
+ },
+ {
+  "text": "<b>Source:</b> My coach say that I am good in it.<br><b>Target:</b> My coach says that I am good at it.<br><br><b>Explanation:</b><br>The word 'say' changes to 'says' because 'my coach' is one person.<br>Error type: subject-verb agreement",
+  "edits": "['replace', 'say', 'says']<br>['replace', 'in', 'at']",
+  "id": 5,
+  "annotator": 1,
+  "annotation_id": 905,
+  "created_at": "2026-01-01T00:00:00.000000Z",
+  "updated_at": "2026-01-01T00:00:00.000000Z",
+  "lead_time": 10.0
+ }
+]

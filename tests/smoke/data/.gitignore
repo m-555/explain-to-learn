@@ -1,0 +1,3 @@
+# The smoke-test corpus is invented (see tests/smoke/corpus.py), so its M2 files are
+# committed, unlike the corpora downloaded into data/raw/.
+!*.m2
