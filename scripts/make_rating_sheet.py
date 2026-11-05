@@ -29,7 +29,7 @@ from typing import Any
 
 from explain_to_learn.edits import Edit, read_jsonl
 from explain_to_learn.human_eval import KEY_COLUMNS, RATING_COLUMNS, SHEET_COLUMNS
-from explain_to_learn.io import read_ids, read_run, write_csv
+from explain_to_learn.io import name_and_path, read_ids, read_run, write_csv
 from explain_to_learn.metrics import shown_text
 from explain_to_learn.prompts import detokenize, prompt_level
 
@@ -92,17 +92,9 @@ def make_sheets(
     return sheet, second, key
 
 
-def parse_system(value: str) -> tuple[str, Path]:
-    """Read a `NAME=PATH` argument."""
-    name, _, path = value.partition("=")
-    if not name or not path:
-        raise argparse.ArgumentTypeError(f"expected NAME=PATH, got {value!r}")
-    return name, Path(path)
-
-
 def main() -> None:
     parser = argparse.ArgumentParser(description="Make the blind rating sheets and the key.")
-    parser.add_argument("--system", type=parse_system, action="append", required=True)
+    parser.add_argument("--system", type=name_and_path, action="append", required=True)
     parser.add_argument("--edits", type=Path, default=Path("data/processed/edits.jsonl"))
     parser.add_argument("--gold-ids", type=Path, default=Path("data/splits/gold_edit_ids.txt"))
     parser.add_argument("--n-edits", type=int, default=100)

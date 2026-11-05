@@ -7,11 +7,13 @@
 - CSV files with a header row (rating sheets, the key, ratings, the hand-check):
   `read_csv` and `write_csv`.
 
-`open_graph` loads the grammar graph from its folder.
+`open_graph` loads the grammar graph from its folder, and `name_and_path` reads the
+`NAME=PATH` arguments that name run files.
 """
 
 from __future__ import annotations
 
+import argparse
 import csv
 import json
 from collections.abc import Iterable, Sequence
@@ -87,3 +89,11 @@ def open_graph(directory: str | Path) -> GrammarGraph:
 
     directory = Path(directory)
     return load_graph(directory / "concepts.yaml", directory / "errant_map.yaml")
+
+
+def name_and_path(value: str) -> tuple[str, Path]:
+    """Read a `NAME=PATH` command-line argument, such as `D=outputs/D/gold-explain.jsonl`."""
+    name, _, path = value.partition("=")
+    if not name or not path:
+        raise argparse.ArgumentTypeError(f"expected NAME=PATH, got {value!r}")
+    return name, Path(path)
