@@ -71,3 +71,28 @@ def test_judge_item_gives_up_with_empty_ratings():
 
     assert result["rule_correct"] == "" and result["invented_rule"] == ""
     assert result["comment"].startswith("judge failed")
+
+
+def test_endpoint_client_sends_the_answer_length_limit(monkeypatch):
+    sent = []
+
+    class Response:
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *exc):
+            return False
+
+        def read(self):
+            return json.dumps({"choices": [{"message": {"content": "{}"}}]}).encode()
+
+    def urlopen(request, timeout):
+        sent.append(json.loads(request.data))
+        return Response()
+
+    monkeypatch.setattr(llm_judge.urllib.request, "urlopen", urlopen)
+    llm_judge.endpoint_client("http://x/v1", "m", "key", True, 0)([])
+    llm_judge.endpoint_client("http://x/v1", "m", "key", False, 0, max_tokens=2048)([])
+
+    assert [body["max_tokens"] for body in sent] == [200, 2048]
+    assert "response_format" in sent[0] and "response_format" not in sent[1]

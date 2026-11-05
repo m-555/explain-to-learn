@@ -89,16 +89,25 @@ def judge_item(
 
 
 def endpoint_client(
-    base_url: str, model: str, api_key: str, json_mode: bool, seed: int, timeout: float = 120
+    base_url: str,
+    model: str,
+    api_key: str,
+    json_mode: bool,
+    seed: int,
+    timeout: float = 120,
+    max_tokens: int = 200,
 ) -> Complete:
-    """A function that sends chat messages to an OpenAI-compatible endpoint."""
+    """A function that sends chat messages to an OpenAI-compatible endpoint.
+
+    For a reasoning model such as gpt-oss, the reasoning counts towards `max_tokens`.
+    """
 
     def complete(messages: list[dict[str, str]]) -> str:
         body: dict[str, Any] = {
             "model": model,
             "messages": messages,
             "temperature": 0,
-            "max_tokens": 200,
+            "max_tokens": max_tokens,
             "seed": seed,
         }
         if json_mode:
@@ -126,6 +135,9 @@ def main() -> None:
     parser.add_argument("--api-key", default=os.environ.get("API_KEY", "EMPTY"))
     parser.add_argument("--retries", type=int, default=2)
     parser.add_argument("--seed", type=int, default=0)
+    parser.add_argument(
+        "--max-tokens", type=int, default=200, help="answer length limit; raise it for gpt-oss"
+    )
     parser.add_argument("--no-json-mode", action="store_true", help="do not send response_format")
     parser.add_argument("--limit", type=int, help="rate only the first N items, for a check")
     args = parser.parse_args()
@@ -133,7 +145,12 @@ def main() -> None:
     rubric = args.rubric.read_text(encoding="utf-8")
     items = read_csv(args.sheet)[: args.limit]
     complete = endpoint_client(
-        args.base_url, args.model, args.api_key, not args.no_json_mode, args.seed
+        args.base_url,
+        args.model,
+        args.api_key,
+        not args.no_json_mode,
+        args.seed,
+        max_tokens=args.max_tokens,
     )
     rows = []
     for number, item in enumerate(items, start=1):
@@ -148,6 +165,7 @@ def main() -> None:
         "base_url": args.base_url,
         "temperature": 0,
         "seed": args.seed,
+        "max_tokens": args.max_tokens,
         "json_mode": not args.no_json_mode,
         "rubric_sha256": hashlib.sha256(rubric.encode("utf-8")).hexdigest(),
         "items": len(rows),
