@@ -239,8 +239,8 @@ def test_unreadable_answers_and_markdown(graph):
     assert feedback_markdown(TextResult([], [])) == ""
 
     text = feedback_markdown(run(graph)[0])
-    assert text.startswith("1. ~~like~~ → **likes** · *Subject-verb agreement*")
-    assert "2. add **a** · *Articles a, an and the*" in text
+    assert text.startswith("**1.** ~~like~~ → **likes** · *Subject-verb agreement*\n\n")
+    assert "**2.** add **a** · *Articles a, an and the*" in text
 
 
 def test_make_edits_fills_the_edit_table_fields():

@@ -49,7 +49,7 @@ def test_explain_prints_markdown_feedback(fakes, capsys):
     assert cli.main(["explain", "She like tea.", "--level", "b1", "--mode", "hint", *GRAPH]) == 0
 
     out = capsys.readouterr().out
-    assert out.startswith("**Corrected:** She likes tea.\n\n1. ~~like~~ → **likes**")
+    assert out.startswith("**Corrected:** She likes tea.\n\n**1.** ~~like~~ → **likes**")
     assert "Look at the verb." in out
     assert fakes["system"] == ("D", None) and fakes["corrector_name"] == "gec"
     assert "Learner level: B1" in fakes["model"].prompts[0][1]["content"]

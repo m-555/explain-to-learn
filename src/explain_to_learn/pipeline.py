@@ -501,5 +501,5 @@ def feedback_markdown(result: TextResult) -> str:
         change = describe_change(item.edit.original_text, item.edit.corrected_text)
         label = item.concept or item.edit.error_type
         text = item.text or "*The model's answer could not be read.*"
-        blocks.append(f"{number}. {change} · *{label}*\n\n   {text}")
+        blocks.append(f"**{number}.** {change} · *{label}*\n\n{text}")
     return "\n\n".join(blocks)
