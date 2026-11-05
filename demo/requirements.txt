@@ -1,0 +1,12 @@
+# Python packages for the Hugging Face Space (see demo/README.md). The Space installs
+# Gradio itself, at the version set by `sdk_version` in the Space's README.
+explain-to-learn @ git+https://github.com/m-555/explain-to-learn@main
+networkx>=3.2
+pyyaml>=6.0
+errant==3.0.2
+en_core_web_sm @ https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.8.0/en_core_web_sm-3.8.0-py3-none-any.whl
+# 2.13.0 is the newest PyTorch release on ZeroGPU's list of supported versions.
+torch==2.13.0
+transformers==5.17.0
+peft==0.21.2
+accelerate==1.15.0

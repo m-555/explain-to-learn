@@ -1,0 +1,62 @@
+# LoRA fine-tuning of systems C and D on one RTX 5090 (32 GB).
+#
+# `defaults` is the main run. Each entry under `variants` changes only the settings it
+# lists. Train one variant for one system with:
+#   python train/train_lora.py --variant r16 --system d
+#
+# LoRA in one sentence: each targeted weight matrix W (d x k) stays frozen, and training
+# learns a low-rank update B·A (B is d x r, A is r x k) that is added as W + (alpha/r)·B·A.
+
+defaults:
+  seed: 42                          # Seeds data order, LoRA initialisation, dropout and the train/validation split.
+
+  model:
+    name: Qwen/Qwen3-4B-Instruct-2507  # 4B-parameter instruction model (Apache-2.0); the base of systems A to D.
+    max_seq_length: 1024            # Tokens per example (prompt + JSON answer); train_lora.py counts longer examples, which are truncated.
+    load_in_4bit: false             # false: frozen base weights in bf16 (LoRA); true: base weights quantised to 4 bits (QLoRA).
+
+  lora:
+    rank: 16                        # r: inner size of B·A; more rank = more trainable parameters and capacity.
+    alpha: 32                       # Scale of the update is alpha / r = 2; alpha is kept at 2 x rank in every variant.
+    dropout: 0.05                   # Dropout on the LoRA path's input, against overfitting (Unsloth's fastest kernels need 0).
+    target_modules:                 # Every attention projection (q, k, v, o) and MLP projection (gate, up, down) gets an adapter.
+      - q_proj
+      - k_proj
+      - v_proj
+      - o_proj
+      - gate_proj
+      - up_proj
+      - down_proj
+
+  training:
+    epochs: 2                       # Passes over the training set.
+    learning_rate: 2.0e-4           # Peak learning rate; LoRA uses a higher rate than full fine-tuning.
+    lr_scheduler: cosine            # After warm-up the rate falls to zero along a cosine curve.
+    warmup_ratio: 0.03              # The first 3% of steps raise the rate linearly from zero.
+    weight_decay: 0.0               # No weight decay on the small LoRA matrices.
+    optimizer: adamw_torch          # Standard AdamW; its state is small because only the LoRA weights train.
+    batch_size: 8                   # Examples per forward pass, sized to leave memory headroom on 32 GB.
+    gradient_accumulation: 4        # Passes per optimiser step, so the effective batch is 8 x 4 = 32 examples.
+    gradient_checkpointing: unsloth # Recompute activations in the backward pass instead of storing them, to save memory.
+    logging_steps: 10               # Log the training loss every 10 optimiser steps.
+
+  logging:
+    report_to: none                 # none, wandb or mlflow; off unless chosen here or with --report-to.
+    project: explain-to-learn       # Weights & Biases project or MLflow experiment name.
+
+variants:
+  r16: {}                           # The defaults: bf16 LoRA, rank 16.
+
+  r8:                               # Half the rank: fewer parameters; tests whether rank 16 is needed.
+    lora:
+      rank: 8
+      alpha: 16
+
+  r32:                              # Double the rank: more capacity; tests whether rank 16 is too small.
+    lora:
+      rank: 32
+      alpha: 64
+
+  qlora_r16:                        # Rank 16 on a 4-bit base model: less memory; measures what quantisation costs.
+    model:
+      load_in_4bit: true
