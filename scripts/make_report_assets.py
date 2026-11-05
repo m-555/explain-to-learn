@@ -925,7 +925,8 @@ def make_results(args: argparse.Namespace) -> list[Path]:
     return written
 
 
-def main(argv: list[str] | None = None) -> None:
+def main(argv: list[str] | None = None) -> list[Path]:
+    """Run one step; returns the paths written (none when its inputs are missing)."""
     parser = argparse.ArgumentParser(description="Figures and tables for the README and report.")
     parser.add_argument("--figures-dir", type=Path, default=Path("report/figures"))
     steps = parser.add_subparsers(dest="step", required=True)
@@ -956,13 +957,14 @@ def main(argv: list[str] | None = None) -> None:
     if args.step == "data":
         if not args.edits.is_file():
             print(f"{args.edits} not found; build the edit table first (see README).")
-            return
+            return []
         written = make_data_figures(read_jsonl(args.edits), args.figures_dir)
     else:
         args.metrics = args.metrics or Path(f"eval/results/metrics_{args.run}.json")
         written = make_results(args)
     for path in written:
         print(f"Wrote {path}")
+    return written
 
 
 if __name__ == "__main__":

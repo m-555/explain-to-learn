@@ -186,7 +186,7 @@ def results_args(root: Path) -> list[str]:
 
 
 def test_no_result_files_writes_nothing(tmp_path, capsys):
-    assets.main(results_args(tmp_path))
+    assert assets.main(results_args(tmp_path)) == []
 
     assert "No result files are available" in capsys.readouterr().out
     assert not (tmp_path / "assets").exists()
@@ -194,7 +194,7 @@ def test_no_result_files_writes_nothing(tmp_path, capsys):
 
 
 def test_results_table_tables_and_figures_from_the_fixture(results):
-    assets.main(results_args(results))
+    written = assets.main(results_args(results))
 
     metrics = json.loads((results / "results" / "metrics_gold.json").read_text())
     table = (results / "assets" / "results_table.md").read_text()
@@ -229,6 +229,7 @@ def test_results_table_tables_and_figures_from_the_fixture(results):
     }
     for name in figures:
         assert (results / "figures" / name).read_bytes().startswith(PNG)
+    assert len(written) == len(figures) + 4  # the Markdown table and three LaTeX tables
     for path in [results / "assets" / "results_table.md", *tables.iterdir()]:
         assert "zebra" not in path.read_text()
 
