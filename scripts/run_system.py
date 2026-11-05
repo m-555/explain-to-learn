@@ -26,13 +26,7 @@ from explain_to_learn.generate import (
     make_backend,
     run_batch,
 )
-
-
-def open_graph(directory: Path):
-    """Load the grammar graph from its YAML files (see `explain_to_learn.graph`)."""
-    from explain_to_learn.graph import load_graph
-
-    return load_graph(directory / "concepts.yaml", directory / "errant_map.yaml")
+from explain_to_learn.io import open_graph
 
 
 def read_ids(path: Path) -> list[str]:

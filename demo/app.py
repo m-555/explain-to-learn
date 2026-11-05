@@ -25,6 +25,7 @@ from typing import Any
 from stubs import StubAnnotator, StubBackend, StubCorrector
 
 from explain_to_learn.generate import load_systems
+from explain_to_learn.io import open_graph
 from explain_to_learn.pipeline import (
     LEVELS,
     Annotator,
@@ -160,9 +161,7 @@ class Demo:
 
 def build_demo(args: argparse.Namespace) -> Demo:
     """Load the models named in the arguments; with --fake, use stubs."""
-    from explain_to_learn.graph import load_graph
-
-    graph = load_graph(f"{args.graph}/concepts.yaml", f"{args.graph}/errant_map.yaml")
+    graph = open_graph(args.graph)
     if args.fake:
         return Demo(StubCorrector(), StubAnnotator(), Explainer(StubBackend()), graph)
     corrector = make_corrector(load_correctors(args.config)[args.corrector])

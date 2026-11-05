@@ -37,6 +37,7 @@ from explain_to_learn.annotation.store import Store
 from explain_to_learn.annotation.task import Task
 from explain_to_learn.edits import Edit, read_jsonl
 from explain_to_learn.generate import OUTPUT_FIELDS
+from explain_to_learn.io import open_graph
 from explain_to_learn.prompts import detokenize, prompt_level
 
 OUTPUT_FILE = "gold_explanations.jsonl"
@@ -91,7 +92,7 @@ class GoldTask(Task):
         drafts_paths: Sequence[str | Path] = (),
     ) -> None:
         try:
-            from explain_to_learn.graph import load_graph
+            self.graph = open_graph(graph_dir)
         except ImportError as exc:
             raise ValueError(
                 'The gold task needs the graph extra: pip install -e ".[graph]"'
@@ -105,8 +106,6 @@ class GoldTask(Task):
                 f"{len(missing)} gold edits are not in {edits_path}, e.g. {missing[0]}"
             )
         self.edits = [edits[edit_id] for edit_id in ids]
-        graph_dir = Path(graph_dir)
-        self.graph = load_graph(graph_dir / "concepts.yaml", graph_dir / "errant_map.yaml")
         self.has_drafts = bool(drafts_paths)
         self.drafts = read_drafts(drafts_paths)
         self.store = Store(Path(out_dir) / OUTPUT_FILE, itemgetter("edit_id"), ids)

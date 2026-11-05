@@ -27,7 +27,8 @@ from collections.abc import Iterable
 from pathlib import Path
 
 from explain_to_learn.edits import Edit, read_jsonl
-from explain_to_learn.graph import OPERATIONS, GrammarGraph, load_graph
+from explain_to_learn.graph import OPERATIONS, GrammarGraph
+from explain_to_learn.io import open_graph
 from explain_to_learn.prompts import mark_edit
 
 LEVELS = ("A1", "A2", "B1", "B2", "C1", "C2", "native")
@@ -196,7 +197,7 @@ def main(argv: list[str] | None = None) -> None:
     parser.add_argument("--seed", type=int, default=0)
     args = parser.parse_args(argv)
 
-    graph = load_graph(args.graph / "concepts.yaml", args.graph / "errant_map.yaml")
+    graph = open_graph(args.graph)
     train_essays = set(args.train_essays.read_text(encoding="utf-8").split())
     paths = write_concept_files(
         graph, read_jsonl(args.edits), train_essays, args.out, args.n, args.seed

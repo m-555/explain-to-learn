@@ -39,6 +39,7 @@ from typing import Any
 from explain_to_learn import prompts
 from explain_to_learn.edits import Edit, read_jsonl
 from explain_to_learn.generate import edit_item
+from explain_to_learn.io import open_graph
 
 SYSTEMS = ("c", "d")
 SEED = 42
@@ -119,11 +120,9 @@ def main(argv: list[str] | None = None) -> None:
     parser.add_argument("--seed", type=int, default=SEED)
     args = parser.parse_args(argv)
 
-    from explain_to_learn.graph import load_graph  # needs the `graph` extra
-
     rows = read_rows(args.silver)
     edits = {edit.edit_id: edit for edit in read_jsonl(args.edits)}
-    grammar_graph = load_graph(args.graph / "concepts.yaml", args.graph / "errant_map.yaml")
+    grammar_graph = open_graph(args.graph)  # needs the `graph` extra
     for system in SYSTEMS:
         splits = build_examples(
             rows, edits, system, grammar_graph, args.validation_share, args.seed

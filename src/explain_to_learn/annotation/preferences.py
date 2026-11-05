@@ -36,6 +36,7 @@ from explain_to_learn.annotation.store import Store
 from explain_to_learn.annotation.task import Task
 from explain_to_learn.edits import read_jsonl
 from explain_to_learn.generate import edit_item
+from explain_to_learn.io import open_graph
 from explain_to_learn.metrics import shown_text
 from explain_to_learn.prompts import build_target, detokenize
 
@@ -123,12 +124,8 @@ class PreferenceTask(Task):
         missing = sorted(wanted - set(self.edits))
         if missing:
             raise ValueError(f"{len(missing)} edits are not in {edits_path}, e.g. {missing[0]}")
-        self.graph = None
-        if any(pair["grounded"] for pair in self.pairs):
-            from explain_to_learn.graph import load_graph
-
-            graph_dir = Path(graph_dir)
-            self.graph = load_graph(graph_dir / "concepts.yaml", graph_dir / "errant_map.yaml")
+        grounded = any(pair["grounded"] for pair in self.pairs)
+        self.graph = open_graph(graph_dir) if grounded else None
         order = [(pair["edit_id"], *self.names) for pair in self.pairs]
         self.store = Store(
             Path(out_dir) / OUTPUT_FILE,
