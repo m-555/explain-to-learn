@@ -95,3 +95,34 @@ systems:
     decoding:
       # Reasoning tokens count towards the limit.
       max_new_tokens: 2048
+
+# Correction step of the end-to-end pipeline: the demo, the `explain-to-learn`
+# command and scripts/evaluate_correction.py. The main evaluation uses the corpus's
+# gold corrections and runs no corrector.
+#
+# gec: Unbabel/gec-t5_small, a T5-small model (60M parameters) for English
+#   grammatical error correction. Apache-2.0 according to its model card, whose tags
+#   name the cLang-8 data (CC BY-NC-SA 4.0). It makes minimal edits, which suits
+#   ERRANT, and is fast enough on a CPU for the demo. Not used: CoEdIT
+#   (grammarly/coedit-*, CC BY-NC 4.0), the cLang-8 T5 reproductions
+#   (gotutiyan/gec-t5-*, CC BY-NC-SA 4.0, research and education only), and
+#   pszemraj/flan-t5-large-grammar-synthesis (trained on an expanded JFLEG, a
+#   fluency corpus, so it rewrites more than ERRANT edits need).
+# llm: the explanation model's base model on the server of systems A and B
+#   (scripts/serve_model.sh), prompted to correct with as few changes as possible.
+correctors:
+  gec:
+    kind: gec
+    model: Unbabel/gec-t5_small
+    prefix: "gec: "
+    num_beams: 5
+    batch_size: 32
+
+  llm:
+    kind: endpoint
+    model: Qwen/Qwen3-4B-Instruct-2507
+    base_url: http://localhost:8000/v1
+    workers: 8
+    decoding:
+      temperature: 0.0
+      max_new_tokens: 256
