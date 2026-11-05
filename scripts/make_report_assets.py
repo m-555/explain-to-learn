@@ -10,9 +10,9 @@ Two steps. Both write counts, means and intervals, never learner text.
              evaluation scripts write:
 
              eval/results/metrics_<run>.json      scripts/compute_metrics.py
-             outputs/human_eval/ratings_rater1.csv
-             outputs/human_eval/key.csv            the first rater's filled sheet and the
-                                                   key from scripts/make_rating_sheet.py
+             outputs/annotations/ratings_rater1.csv   the first rater's ratings, saved
+                                                   by the annotation app
+             outputs/human_eval/key.csv            the key from scripts/make_rating_sheet.py
              outputs/human_eval/ratings_llm_judge.csv   scripts/llm_judge.py
              eval/results/agreement_raters.md
              eval/results/agreement_judge.md       scripts/agreement.py
@@ -946,7 +946,10 @@ def main(argv: list[str] | None = None) -> list[Path]:
     results.add_argument("--run", default="gold-explain", help="run name of the metrics file")
     results.add_argument("--metrics", type=Path, help="default: eval/results/metrics_<run>.json")
     human_dir = Path("outputs/human_eval")
-    results.add_argument("--ratings", type=Path, default=human_dir / "ratings_rater1.csv")
+    # Where the annotation app saves the first rater's ratings (annotation/ratings.py).
+    results.add_argument(
+        "--ratings", type=Path, default=Path("outputs/annotations/ratings_rater1.csv")
+    )
     results.add_argument("--key", type=Path, default=human_dir / "key.csv")
     results.add_argument("--judge-ratings", type=Path, default=human_dir / "ratings_llm_judge.csv")
     results.add_argument(

@@ -13,10 +13,10 @@ Use it for the second rater against the first (50 items), and for the LLM judge
 against the first rater (all items).
 
 Usage:
-    python scripts/agreement.py --first outputs/human_eval/ratings_rater1.csv \
-        --second outputs/human_eval/ratings_rater2.csv --title "Rater 1 vs rater 2" \
+    python scripts/agreement.py --first outputs/annotations/ratings_rater1.csv \
+        --second outputs/annotations/ratings_rater2.csv --title "Rater 1 vs rater 2" \
         --out eval/results/agreement_raters.md
-    python scripts/agreement.py --first outputs/human_eval/ratings_rater1.csv \
+    python scripts/agreement.py --first outputs/annotations/ratings_rater1.csv \
         --second outputs/human_eval/ratings_llm_judge.csv --title "LLM judge vs rater 1" \
         --out eval/results/agreement_judge.md
 

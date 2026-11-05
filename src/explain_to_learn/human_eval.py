@@ -6,7 +6,7 @@ writes the blind rating sheet and a separate key, `scripts/agreement.py` compare
 sets of ratings, and `scripts/llm_judge.py` rates the sheet with a model. This module
 holds what they share, and the summary step:
 
-    python -m explain_to_learn.human_eval --ratings outputs/human_eval/ratings_rater1.csv \
+    python -m explain_to_learn.human_eval --ratings outputs/annotations/ratings_rater1.csv \
         --key outputs/human_eval/key.csv --out-dir eval/results --name human_eval_rater1
 
 The summary joins the ratings with the key (item ID -> system, edit ID, error category,
