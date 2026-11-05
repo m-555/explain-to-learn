@@ -221,3 +221,11 @@ def test_edit_item_without_concept_or_graph():
     assert record["concept_id"] is None and not record["grounded"]
     assert "Grammar rule" not in messages[1]["content"]
     assert edit_item(make_edit("R:VERB:SVA"), "hint")[0]["concept_id"] is None
+
+
+def test_make_backend_sends_the_server_key(monkeypatch):
+    system = {"backend": "openai", "model": "m", "served_model": "system-d"}
+    assert make_backend(system).api_key == "none"
+    monkeypatch.setenv("API_KEY", "secret")
+    backend = make_backend(system)
+    assert (backend.api_key, backend.model) == ("secret", "system-d")

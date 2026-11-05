@@ -114,3 +114,15 @@ def raw_dir(tmp_path: Path) -> Path:
         essays = [{**e, "id": f"{file_idx}-{e['id']}"} for e in essays]
         write_pair(tmp_path / json_file, tmp_path / m2_file, essays, m2_text)
     return tmp_path
+
+
+@pytest.fixture(scope="session")
+def errant_annotator():
+    """ERRANT with spaCy's English model; skips the test if either is missing."""
+    pytest.importorskip("errant")
+    spacy = pytest.importorskip("spacy")
+    if not spacy.util.is_package("en_core_web_sm"):
+        pytest.skip("spaCy model en_core_web_sm is not installed")
+    from explain_to_learn.pipeline import ErrantAnnotator
+
+    return ErrantAnnotator()

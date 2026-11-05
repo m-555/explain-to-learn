@@ -4,6 +4,9 @@ on:
   push:
   pull_request:
 
+# No GPU and no model downloads. Tests that need ERRANT with spaCy's English model skip;
+# run them locally after `pip install -e ".[data]"` and `python -m spacy download
+# en_core_web_sm`.
 jobs:
   lint-and-test:
     runs-on: ubuntu-latest
@@ -20,4 +23,21 @@ jobs:
           ruff check .
           ruff format --check .
       - name: Test
-        run: pytest -q
+        run: pytest -q -rs
+      - name: Command-line tool
+        run: explain-to-learn --help
+
+  # Gradio is large, so the demo's interface is built in a separate job that runs
+  # alongside the main one.
+  demo:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - name: Install
+        run: pip install -e ".[dev,graph,generate,demo]"
+      - name: Build the demo in preview mode
+        run: pytest -q -rs tests/test_demo.py

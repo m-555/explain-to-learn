@@ -18,6 +18,7 @@ edit counts against coverage rather than stopping a run.
 from __future__ import annotations
 
 import json
+import os
 import re
 import time
 import urllib.request
@@ -210,12 +211,17 @@ class TransformersBackend:
 
 
 def make_backend(system: dict) -> Backend:
-    """Build the backend named in a system definition from `configs/systems.yaml`."""
+    """Build the backend named in a system definition from `configs/systems.yaml`.
+
+    A server backend sends the key in the `API_KEY` environment variable, if set, as
+    `scripts/serve_model.sh` expects.
+    """
     kind = system["backend"]
     if kind == "openai":
         return OpenAIBackend(
             model=system.get("served_model", system["model"]),
             base_url=system.get("base_url", "http://localhost:8000/v1"),
+            api_key=os.environ.get("API_KEY", "none"),
             timeout_s=system.get("timeout_s", 120.0),
             extra_body=system.get("extra_body") or {},
         )

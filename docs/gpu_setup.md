@@ -199,7 +199,7 @@ Face cache means models are downloaded only once.
 | --- | --- |
 | Systems A and B (base model; B only adds the graph snippet to the prompt) | `bash scripts/serve_model.sh Qwen/Qwen3-4B-Instruct-2507` |
 | Systems C and D (base model plus LoRA adapters) | `bash scripts/serve_model.sh Qwen/Qwen3-4B-Instruct-2507 system-c=outputs/adapters/c-r16 system-d=outputs/adapters/d-r16` |
-| Teacher model for silver data, or the LLM judge | `bash scripts/serve_model.sh <model-id>` |
+| Teacher model (system R) for silver data, or the LLM judge, on port 8001 as `configs/systems.yaml` expects | `PORT=8001 bash scripts/serve_model.sh openai/gpt-oss-20b` |
 
 With adapters, a request picks one by setting `"model": "system-d"`. The base model is
 still served under its own name. The teacher model has to fit in 32 GB together with
