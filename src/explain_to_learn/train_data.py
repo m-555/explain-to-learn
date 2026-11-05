@@ -95,6 +95,7 @@ def build_examples(
 
 
 def main(argv: list[str] | None = None) -> None:
+    """Write the SFT examples of systems C and D to `--out`."""
     parser = argparse.ArgumentParser(description="Build SFT examples for systems C and D.")
     parser.add_argument("--silver", type=Path, default=Path("outputs/silver/kept.jsonl"))
     parser.add_argument("--edits", type=Path, default=Path("data/processed/edits.jsonl"))

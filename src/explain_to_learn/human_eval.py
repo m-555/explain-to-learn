@@ -132,6 +132,7 @@ def write_summaries(rows: list[dict[str, Any]], out_dir: str | Path, name: str) 
 
 
 def main() -> None:
+    """Join a ratings file with the key and write the summaries to `--out-dir`."""
     parser = argparse.ArgumentParser(description="Summarise ratings per system, category, level.")
     parser.add_argument("--ratings", type=Path, required=True, help="a filled rating sheet")
     parser.add_argument("--key", type=Path, default=Path("outputs/human_eval/key.csv"))

@@ -129,6 +129,7 @@ def compute(args: argparse.Namespace, graph: GrammarGraph) -> dict[str, Any]:
 
 
 def main(argv: list[str] | None = None) -> None:
+    """Score the systems' run files and write `metrics_<run>.md` and `.json`."""
     parser = argparse.ArgumentParser(description="Automatic metrics per system.")
     parser.add_argument("--run", required=True, help="Run name, e.g. gold-explain")
     parser.add_argument("--systems", nargs="+", default=["A", "B", "C", "D", "R"])

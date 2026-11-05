@@ -56,7 +56,9 @@ class Decoding:
 class Backend(Protocol):
     """Anything that turns chat messages into the model's reply text."""
 
-    def complete(self, messages: list[dict], decoding: Decoding) -> str: ...
+    def complete(self, messages: list[dict], decoding: Decoding) -> str:
+        """The model's reply text to `messages`, decoded with `decoding`."""
+        ...
 
 
 @dataclass
@@ -161,6 +163,7 @@ class OpenAIBackend:
         }
 
     def complete(self, messages: list[dict], decoding: Decoding) -> str:
+        """Send the messages to `/chat/completions`; the reply text, or ""."""
         body = json.dumps(self.request_body(messages, decoding)).encode("utf-8")
         request = urllib.request.Request(
             self.base_url.rstrip("/") + "/chat/completions",
@@ -194,6 +197,7 @@ class TransformersBackend:
         self.model.eval()
 
     def complete(self, messages: list[dict], decoding: Decoding) -> str:
+        """Generate a reply locally; greedy unless the temperature is above 0."""
         inputs = self.tokenizer.apply_chat_template(
             messages, add_generation_prompt=True, return_tensors="pt", return_dict=True
         ).to(self.model.device)

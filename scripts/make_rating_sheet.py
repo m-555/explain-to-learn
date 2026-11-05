@@ -93,6 +93,7 @@ def make_sheets(
 
 
 def main() -> None:
+    """Write the rating sheet, the second rater's sheet and the key, unless they exist."""
     parser = argparse.ArgumentParser(description="Make the blind rating sheets and the key.")
     parser.add_argument("--system", type=name_and_path, action="append", required=True)
     parser.add_argument("--edits", type=Path, default=Path("data/processed/edits.jsonl"))

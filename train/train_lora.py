@@ -298,6 +298,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
 
 
 def main() -> None:
+    """Train one adapter, print a summary and push it to the Hub if asked."""
     args = parse_args()
     config = load_config(args.config, args.variant)
     args.report_to = args.report_to or config["logging"]["report_to"]

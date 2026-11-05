@@ -149,6 +149,7 @@ def compare_scores(
 
 
 def percent(value: float | None) -> str:
+    """A share as a percentage with one decimal, or a dash for None."""
     return "–" if value is None else f"{100 * value:.1f}"
 
 
@@ -286,6 +287,7 @@ def compare(args: argparse.Namespace) -> None:
 
 
 def main(argv: list[str] | None = None) -> None:
+    """Run one step: prepare, run or compare."""
     parser = argparse.ArgumentParser(description="Compare the systems with GEE's explanations.")
     parser.add_argument("--edits", type=Path, default=Path("data/processed/edits.jsonl"))
     parser.add_argument("--gee-dir", type=Path, default=GEE_DIR, help="IDs, references, sheet")

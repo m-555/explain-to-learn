@@ -141,6 +141,7 @@ class Faithfulness:
 
     @property
     def faithful(self) -> bool:
+        """True if every check that applies passes."""
         return (
             self.names_original is not False
             and self.names_corrected is not False
@@ -490,6 +491,7 @@ def correction_f05(orig: str | Path, hyp: str | Path, ref_m2: str | Path) -> dic
 
 
 def _cell(value: float | None, percent: bool = True) -> str:
+    """A table cell: a share in percent with one decimal, else three decimals; - for None."""
     if value is None:
         return "-"
     return f"{100 * value:.1f}" if percent else f"{value:.3f}"

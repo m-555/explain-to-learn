@@ -114,6 +114,7 @@ def build_preferences(
 
 
 def main(argv: list[str] | None = None) -> None:
+    """Build the DPO pairs and write `train.jsonl` and `validation.jsonl` to `--out`."""
     parser = argparse.ArgumentParser(description="Build DPO pairs from teacher preferences.")
     parser.add_argument(
         "--preferences", type=Path, default=Path("outputs/annotations/preferences.jsonl")

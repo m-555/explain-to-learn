@@ -89,6 +89,7 @@ def sample_gold(edits: Iterable[Edit], n: int = 300, seed: int = GOLD_SEED) -> l
 
 
 def main() -> None:
+    """Write the essay split files and the gold edit IDs to `--out`."""
     parser = argparse.ArgumentParser(description="Write essay split files and gold edit IDs.")
     parser.add_argument("--edits", type=Path, default=Path("data/processed/edits.jsonl"))
     parser.add_argument("--out", type=Path, default=Path("data/splits"))

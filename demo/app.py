@@ -51,6 +51,7 @@ try:  # On a ZeroGPU Space, a GPU is attached only while a decorated function ru
 except ImportError:
 
     def gpu(function: Callable[..., Any]) -> Callable[..., Any]:
+        """Run the function as it is when ZeroGPU's `spaces` package is not installed."""
         return function
 
 
@@ -89,6 +90,7 @@ def env(name: str, default: str | None = None) -> str | None:
 
 
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
+    """The demo's settings: command-line options, defaulting to DEMO_<NAME> variables."""
     parser = argparse.ArgumentParser(description="Explain-to-Learn demo.")
     parser.add_argument("--fake", action="store_true", default=env("FAKE") == "1")
     parser.add_argument("--config", default=env("CONFIG", "configs/systems.yaml"))
@@ -230,6 +232,7 @@ def build_ui(demo: Demo, fake: bool = False) -> gr.Blocks:
 
 
 def main() -> None:
+    """Start the demo on `--port`, with the models or, with --fake, the stubs."""
     args = parse_args()
     build_ui(build_demo(args), args.fake).launch(server_port=args.port, share=args.share)
 

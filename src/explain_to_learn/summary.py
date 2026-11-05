@@ -140,6 +140,7 @@ def describe_position(example: dict) -> str:
 
 
 def _plural(count: int, word: str) -> str:
+    """A count with its noun: `1 edit`, `2 edits`."""
     return f"{count} {word}" + ("" if count == 1 else "s")
 
 

@@ -60,6 +60,7 @@ def m2_blocks(path: str | Path) -> list[str]:
 
 
 def write_m2(blocks: list[str], path: Path) -> None:
+    """Write M2 sentence blocks to a file, separated by blank lines."""
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text("\n\n".join(blocks) + "\n", encoding="utf-8")
 
@@ -175,6 +176,7 @@ def markdown_report(results: dict) -> str:
 
 
 def main(argv: list[str] | None = None) -> None:
+    """Correct the dev sentences (resuming), score them and write the result files."""
     parser = argparse.ArgumentParser(description="Correction F0.5 on W&I+LOCNESS dev.")
     parser.add_argument("--run", required=True, help="Run name, e.g. gec-t5-small")
     parser.add_argument("--corrector", default="gec", help="Corrector in the config")

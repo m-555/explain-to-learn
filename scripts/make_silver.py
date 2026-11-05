@@ -45,6 +45,7 @@ RESULTS_DIR = Path("eval/results")
 
 
 def generate(args: argparse.Namespace) -> None:
+    """Step `generate`: run the teacher on a seeded sample of training edits."""
     system = load_systems(args.config)[args.system]
     graph = open_graph(args.graph)
     edits = read_jsonl(args.edits)
@@ -76,6 +77,7 @@ def generate(args: argparse.Namespace) -> None:
 
 
 def filter_outputs(args: argparse.Namespace) -> None:
+    """Step `filter`: keep usable outputs, count rejections, export the hand-check."""
     edits = {edit.edit_id: edit for edit in read_jsonl(args.edits)}
     kept, counts = filter_silver(read_rows(args.raw), edits)
     write_rows(kept, args.kept)
@@ -95,6 +97,7 @@ def filter_outputs(args: argparse.Namespace) -> None:
 
 
 def score(args: argparse.Namespace) -> None:
+    """Step `score`: write the hand-check accuracy with its 95% Wilson interval."""
     result = handcheck_accuracy(args.handcheck)
     args.results.mkdir(parents=True, exist_ok=True)
     (args.results / "silver_handcheck.json").write_text(json.dumps(result, indent=2) + "\n")
@@ -109,6 +112,7 @@ def score(args: argparse.Namespace) -> None:
 
 
 def main(argv: list[str] | None = None) -> None:
+    """Run one step: generate, filter or score."""
     parser = argparse.ArgumentParser(description="Silver training explanations.")
     parser.add_argument("--edits", type=Path, default=Path("data/processed/edits.jsonl"))
     parser.add_argument("--seed", type=int, default=0)

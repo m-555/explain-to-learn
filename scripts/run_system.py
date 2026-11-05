@@ -30,6 +30,7 @@ from explain_to_learn.io import open_graph, read_ids
 
 
 def main(argv: list[str] | None = None) -> None:
+    """Run one system on the edits of `--ids` that are not in its run file yet."""
     parser = argparse.ArgumentParser(description="Run a system over a list of edits.")
     parser.add_argument("--system", required=True, help="System name in the config, e.g. B")
     parser.add_argument("--run", required=True, help="Run name, e.g. gold-explain")

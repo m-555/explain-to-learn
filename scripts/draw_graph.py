@@ -139,6 +139,7 @@ def draw(grammar: GrammarGraph, out_path: str | Path) -> Path:
 
 
 def main(argv: list[str] | None = None) -> int:
+    """Draw the prerequisite graph to `--out`; returns the exit code."""
     parser = argparse.ArgumentParser(description="Draw the grammar graph's prerequisite links.")
     parser.add_argument("--concepts", default=DEFAULT_CONCEPTS_PATH)
     parser.add_argument("--map", default=DEFAULT_MAP_PATH)

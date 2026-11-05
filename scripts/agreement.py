@@ -103,6 +103,7 @@ def markdown(title: str, rows: list[list[object]]) -> str:
 
 
 def main() -> None:
+    """Print the agreement table of two rating files, and write it to `--out` if given."""
     parser = argparse.ArgumentParser(description="Agreement between two sets of ratings.")
     parser.add_argument("--first", type=Path, required=True, help="reference ratings (CSV)")
     parser.add_argument("--second", type=Path, required=True, help="ratings to compare (CSV)")

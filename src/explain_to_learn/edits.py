@@ -322,6 +322,7 @@ def read_jsonl(path: str | Path) -> list[Edit]:
 
 
 def main() -> None:
+    """Build the edit table from `--raw` and write it to `--out`."""
     parser = argparse.ArgumentParser(description="Build the edit table.")
     commands = parser.add_subparsers(dest="command", required=True)
     build = commands.add_parser("build", help="Build the edit table from the raw corpora.")

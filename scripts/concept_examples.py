@@ -187,6 +187,7 @@ def write_concept_files(
 
 
 def main(argv: list[str] | None = None) -> None:
+    """Write one example file per concept and the index to `--out`."""
     parser = argparse.ArgumentParser(description="Example edits per grammar concept.")
     parser.add_argument("--edits", type=Path, default=Path("data/processed/edits.jsonl"))
     parser.add_argument("--train-essays", type=Path, default=Path("data/splits/train_essays.txt"))

@@ -82,6 +82,7 @@ class Store:
         self.records = self._read()
 
     def _read(self) -> dict[Hashable, Record]:
+        """The records in the file, by item key."""
         return {self.key(record): record for record in read_records(self.path)}
 
     def get(self, item_key: Hashable) -> Record | None:

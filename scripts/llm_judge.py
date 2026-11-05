@@ -123,6 +123,7 @@ def endpoint_client(
 
 
 def main() -> None:
+    """Rate the sheet's items and write the ratings and the judge's settings."""
     parser = argparse.ArgumentParser(description="Rate a rating sheet with an LLM judge.")
     parser.add_argument("--model", required=True, help="model name served by the endpoint")
     parser.add_argument("--sheet", type=Path, default=Path("outputs/human_eval/rating_sheet.csv"))
