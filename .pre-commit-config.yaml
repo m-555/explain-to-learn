@@ -1,0 +1,39 @@
+# Checks that run on every commit. Install them once with:
+#   pip install pre-commit && pre-commit install
+# and run them on every file with:
+#   pre-commit run --all-files
+repos:
+  # The Ruff version is the one pinned in the `dev` extra of pyproject.toml.
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.17.3
+    hooks:
+      - id: ruff-check
+        args: [--fix]
+      - id: ruff-format
+
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      # The ACL style files are official and kept unchanged; the GEE fixture keeps the
+      # layout of GEE's own file.
+      - id: end-of-file-fixer
+        exclude: ^(report/acl\.sty|report/acl_natbib\.bst|tests/fixtures/gee/.*\.json)$
+      - id: trailing-whitespace
+        args: [--markdown-linebreak-ext=md]
+        exclude: ^report/(acl\.sty|acl_natbib\.bst)$
+      - id: check-yaml
+      # Figures and notebooks with plots stay well below 1 MB; model files and data do not.
+      - id: check-added-large-files
+        args: [--maxkb=1000]
+
+  # Learner text stays local: the corpora, the edit table and every output quote it.
+  # .gitignore already leaves these folders out; this hook also stops `git add -f`.
+  - repo: local
+    hooks:
+      - id: no-learner-text
+        name: no files from data/raw, data/processed or outputs
+        entry: >-
+          These files quote learner text and must stay local. Unstage them with
+          `git restore --staged <file>`:
+        language: fail
+        files: ^(data/raw|data/processed|outputs)/
