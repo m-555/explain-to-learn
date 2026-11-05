@@ -101,7 +101,7 @@ class ErrantAnnotator:
     files were made with, so edits look like the edit table's.
     """
 
-    def __init__(self, language: str = "en"):
+    def __init__(self, language: str = "en") -> None:
         import errant
 
         self.errant = errant.load(language)
@@ -237,7 +237,7 @@ class GecCorrector:
         num_beams: int = 5,
         batch_size: int = 32,
         device: str | None = None,
-    ):
+    ) -> None:
         import torch
         from transformers import AutoModelForSeq2SeqLM, AutoTokenizer
 

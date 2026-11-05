@@ -17,11 +17,14 @@ and needs the `model` extra; it is off by default.
 from __future__ import annotations
 
 import argparse
+from collections.abc import Sequence
 from pathlib import Path
+from typing import TYPE_CHECKING, Any
 
-from explain_to_learn.edits import read_jsonl
+from explain_to_learn.edits import Edit, read_jsonl
 from explain_to_learn.io import open_graph, read_ids, read_run
 from explain_to_learn.metrics import (
+    ContradictionCheck,
     breakdown,
     correction_f05,
     load_terms,
@@ -33,16 +36,26 @@ from explain_to_learn.metrics import (
 )
 from explain_to_learn.prompts import prompt_level
 
+if TYPE_CHECKING:
+    from explain_to_learn.graph import GrammarGraph
+
 COMPARED_METRICS = ("covered", "concept_correct", "faithful", "within_length")
 DEFAULT_COMPARISONS = ("B:A", "C:A", "D:B", "D:C")
 
 
-def read_outputs(path: Path) -> dict[str, dict]:
+def read_outputs(path: Path) -> dict[str, dict[str, Any]]:
     """Output rows by edit ID (the last row wins); empty if the run has no file."""
     return read_run(path) if path.is_file() else {}
 
 
-def score_system(outputs, edits, graph, terms, mode, contradiction_check=None) -> list[dict]:
+def score_system(
+    outputs: dict[str, dict[str, Any]],
+    edits: Sequence[Edit],
+    graph: GrammarGraph,
+    terms: Sequence[str],
+    mode: str,
+    contradiction_check: ContradictionCheck | None = None,
+) -> list[dict[str, Any]]:
     """Per-edit scores for one system; `edits` fixes the denominator."""
     items = []
     for edit in edits:
@@ -67,7 +80,7 @@ def score_system(outputs, edits, graph, terms, mode, contradiction_check=None) -
     return items
 
 
-def compute(args: argparse.Namespace, graph) -> dict:
+def compute(args: argparse.Namespace, graph: GrammarGraph) -> dict[str, Any]:
     """All systems' summaries, breakdowns and paired comparisons."""
     all_edits = {edit.edit_id: edit for edit in read_jsonl(args.edits)}
     edits = [all_edits[i] for i in read_ids(args.ids)]

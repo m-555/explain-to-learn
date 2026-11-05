@@ -178,7 +178,7 @@ class OpenAIBackend:
 class TransformersBackend:
     """A local Hugging Face causal LM, with an optional PEFT (LoRA) adapter."""
 
-    def __init__(self, model: str, adapter: str | None = None, dtype: str = "bfloat16"):
+    def __init__(self, model: str, adapter: str | None = None, dtype: str = "bfloat16") -> None:
         import torch
         from transformers import AutoModelForCausalLM, AutoTokenizer
 

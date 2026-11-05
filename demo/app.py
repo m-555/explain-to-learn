@@ -19,8 +19,9 @@ from __future__ import annotations
 
 import argparse
 import os
+from collections.abc import Callable
 from dataclasses import dataclass
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from stubs import StubAnnotator, StubBackend, StubCorrector
 
@@ -40,13 +41,16 @@ from explain_to_learn.pipeline import (
 )
 from explain_to_learn.summary import markdown, summarize
 
+if TYPE_CHECKING:
+    import gradio as gr
+
 try:  # On a ZeroGPU Space, a GPU is attached only while a decorated function runs.
     import spaces
 
     gpu = spaces.GPU(duration=120)
 except ImportError:
 
-    def gpu(function):
+    def gpu(function: Callable[..., Any]) -> Callable[..., Any]:
         return function
 
 
@@ -169,22 +173,24 @@ def build_demo(args: argparse.Namespace) -> Demo:
     return Demo(corrector, ErrantAnnotator(), explainer, graph)
 
 
-def build_ui(demo: Demo, fake: bool = False):
+def build_ui(demo: Demo, fake: bool = False) -> gr.Blocks:
     """The Gradio interface: a feedback tab for learners and a summary tab for teachers."""
     import gradio as gr
 
     @gpu
-    def feedback(text, auto_correct, corrected, level, mode):
+    def feedback(
+        text: str, auto_correct: bool, corrected: str, level: str, mode: str
+    ) -> tuple[str, str]:
         return demo.feedback(text, auto_correct, corrected, level, mode)
 
     @gpu
-    def summary(text, auto_correct, corrected, level):
+    def summary(text: str, auto_correct: bool, corrected: str, level: str) -> str:
         return demo.summary(text, auto_correct, corrected, level)
 
-    def show_correction(auto_correct: bool):
+    def show_correction(auto_correct: bool) -> gr.Textbox:
         return gr.Textbox(visible=not auto_correct)
 
-    def text_inputs(label: str):
+    def text_inputs(label: str) -> tuple[gr.Textbox, gr.Checkbox, gr.Textbox]:
         text = gr.Textbox(label=label, lines=4, max_length=MAX_CHARS)
         auto_correct = gr.Checkbox(value=True, label="Correct the text automatically")
         corrected = gr.Textbox(
