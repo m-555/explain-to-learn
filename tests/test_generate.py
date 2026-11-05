@@ -158,7 +158,9 @@ def test_systems_config_defines_all_systems():
     assert [systems[s]["grounded"] for s in "ABCDR"] == [False, True, False, True, True]
     assert systems["A"]["model"] == systems["C"]["model"]
     assert not systems["A"].get("adapter") and not systems["B"].get("adapter")
-    assert systems["C"]["adapter"] and systems["C"]["adapter"] == systems["D"]["adapter"]
+    # C is trained without the graph snippet and D with it, so each has its own adapter.
+    assert systems["C"]["adapter"] and systems["D"]["adapter"]
+    assert systems["C"]["adapter"] != systems["D"]["adapter"]
     for system in systems.values():
         assert system["backend"] in {"openai", "transformers"}
         assert system["decoding"]["temperature"] == 0.0

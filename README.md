@@ -77,7 +77,7 @@ The edit table rebuilds with the same edit IDs as `data/splits/gold_edit_ids.txt
 ruff check . && pytest
 ```
 
-Other extras: `graph`, `data` (ERRANT and spaCy), `model` and `demo`. For `model`, first install a PyTorch build for CUDA 12.8 or newer (needed for Blackwell GPUs), for example `pip install torch --index-url https://download.pytorch.org/whl/cu128`.
+Other extras: `graph`, `generate`, `data` (ERRANT and spaCy), `model`, `train` and `demo`. GPU work needs a PyTorch build with Blackwell (`sm_120`) support, installed before the extras: `pip install torch==2.14.1 --index-url https://download.pytorch.org/whl/cu130`. See [docs/gpu_setup.md](docs/gpu_setup.md) for the full setup, [demo/README.md](demo/README.md) for the demo, and [MODEL_CARD.md](MODEL_CARD.md) and [DATA_CARD.md](DATA_CARD.md) for the cards.
 
 ## Data
 

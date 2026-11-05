@@ -1,6 +1,6 @@
 # Systems compared in the evaluation (see README, "Systems compared").
 #
-# A and B use the base student model, C and D the same model with the LoRA adapter.
+# A and B use the base student model, C and D the same model with their own LoRA adapters.
 # B and D get the grammar graph snippet in the prompt; A and C do not. R is the
 # larger teacher model with the graph: it is the reference point and also writes
 # the silver training explanations.
@@ -62,15 +62,16 @@ systems:
   C:
     description: LoRA-tuned, no graph
     model: Qwen/Qwen3-4B-Instruct-2507
-    # Local adapter directory (git-ignored) or its Hugging Face Hub ID.
-    adapter: adapters/qwen3-4b-explain-lora
+    # Local adapter directory written by train/train_lora.py (git-ignored), or its
+    # Hugging Face Hub ID. C is trained without the graph snippet, D with it.
+    adapter: outputs/adapters/c-r16
     grounded: false
     backend: transformers
 
   D:
     description: LoRA-tuned, with graph snippet
     model: Qwen/Qwen3-4B-Instruct-2507
-    adapter: adapters/qwen3-4b-explain-lora
+    adapter: outputs/adapters/d-r16
     grounded: true
     backend: transformers
 
