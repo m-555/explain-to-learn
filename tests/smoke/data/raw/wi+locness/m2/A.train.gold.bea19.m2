@@ -34,4 +34,3 @@ A 0 1|||R:ORTH|||English|||REQUIRED|||-NONE-|||0
 
 S It 's a easy language for me .
 A 2 3|||R:DET|||an|||REQUIRED|||-NONE-|||0
-

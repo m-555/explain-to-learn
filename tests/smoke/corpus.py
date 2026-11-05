@@ -557,7 +557,7 @@ def write_corpus(raw_dir: str | Path = RAW_DIR) -> list[Path]:
             path.parent.mkdir(parents=True, exist_ok=True)
         lines = "".join(json.dumps(r, ensure_ascii=False) + "\n" for r in records)
         json_path.write_text(lines, encoding="utf-8")
-        m2_path.write_text("\n\n".join(blocks) + "\n\n", encoding="utf-8")
+        m2_path.write_text("\n\n".join(blocks) + "\n", encoding="utf-8")
         written += [json_path, m2_path]
     gee_path = raw_dir / GEE_FILE
     gee_path.parent.mkdir(parents=True, exist_ok=True)

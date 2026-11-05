@@ -16,4 +16,3 @@ A 3 4|||R:DET|||a|||REQUIRED|||-NONE-|||0
 
 S The garden is full of flowers in spring .
 A -1 -1|||noop|||-NONE-|||REQUIRED|||-NONE-|||0
-

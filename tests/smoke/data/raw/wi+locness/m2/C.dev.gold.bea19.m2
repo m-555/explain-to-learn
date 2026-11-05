@@ -18,4 +18,3 @@ A -1 -1|||noop|||-NONE-|||REQUIRED|||-NONE-|||0
 S However it can also cause the stress .
 A 1 1|||M:PUNCT|||,|||REQUIRED|||-NONE-|||0
 A 5 6|||U:DET||||||REQUIRED|||-NONE-|||0
-

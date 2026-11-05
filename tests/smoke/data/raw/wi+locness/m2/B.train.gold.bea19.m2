@@ -26,4 +26,3 @@ A 1 2|||R:VERB:INFL|||caught|||REQUIRED|||-NONE-|||0
 
 S Our parents are proud on him .
 A 4 5|||R:PREP|||of|||REQUIRED|||-NONE-|||0
-

@@ -15,4 +15,3 @@ A 4 4|||M:DET|||the|||REQUIRED|||-NONE-|||0
 
 S It would be a great day for everyone .
 A 3 4|||UNK|||a|||REQUIRED|||-NONE-|||0
-
