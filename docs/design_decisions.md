@@ -26,7 +26,7 @@ only; results are reported elsewhere.
 written by the corpus annotators, not from a correction model. Every system gets the
 same sentence and the same edit, and is scored only on what it says about that edit
 (`src/explain_to_learn/edits.py`, `scripts/run_system.py`). Only the end-to-end demo adds
-a correction model in front (`demo/pipeline.py`), and its correction quality is measured
+a correction model in front (`src/explain_to_learn/pipeline.py`), and its correction quality is measured
 separately with ERRANT's F0.5 (section 6).
 
 **Why.** If a system had to correct the sentence first, a weak explanation and a wrong
