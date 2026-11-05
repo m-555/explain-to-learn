@@ -158,12 +158,13 @@ Code items are ticked when the code is done; experiments are ticked when they ha
 │                              # train_data, preference, human_eval, gee, pipeline, summary, cli
 │   └── annotation/            # local annotation app for the teacher's tasks
 ├── scripts/                   # data download, runs, metrics, silver data, ratings, agreement,
-│                              # LLM judge, correction F0.5, GEE comparison, report assets
+│                              # LLM judge, correction F0.5, GEE comparison, report assets,
+│                              # showcase candidates, Space sync
 ├── train/                     # LoRA and DPO configurations and training scripts
 ├── eval/                      # rubric and aggregate results
 ├── demo/                      # Gradio app and its preview stubs
 ├── docs/                      # architecture, design decisions, experiment runbook, GPU setup,
-│                              # annotation guide
+│                              # annotation guide, licences, release process, experiment log
 ├── notebooks/                 # data statistics and results analysis
 ├── report/                    # ACL-format report
 ├── docker/                    # training image for the RTX 5090
@@ -201,4 +202,4 @@ Models and their licences:
 
 ## Licence
 
-The code and the grammar graph are released under the [MIT License](LICENSE). The datasets keep their own licences: W&I+LOCNESS and FCE may be used for non-commercial research and education only, and must be downloaded from the [BEA-2019 shared-task page](https://www.cl.cam.ac.uk/research/nl/bea2019st/). Everything derived from them, including the silver data and the LoRA adapters, carries the same restriction.
+The code and the grammar graph are released under the [MIT License](LICENSE). The datasets keep their own licences: W&I+LOCNESS and FCE may be used for non-commercial research and education only, and must be downloaded from the [BEA-2019 shared-task page](https://www.cl.cam.ac.uk/research/nl/bea2019st/). Everything derived from them, including the silver data and the LoRA adapters, carries the same restriction. [docs/licences.md](docs/licences.md) lists the licence of every dataset, model and library used, and what follows for the code, the adapters and the demo. Changes are recorded in [CHANGELOG.md](CHANGELOG.md).
