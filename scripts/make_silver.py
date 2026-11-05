@@ -30,7 +30,7 @@ from explain_to_learn.generate import (
     make_backend,
     run_batch,
 )
-from explain_to_learn.io import open_graph, read_ids
+from explain_to_learn.io import open_graph, read_ids, read_rows, write_rows
 from explain_to_learn.silver import (
     assign_modes,
     counts_table,
@@ -42,11 +42,6 @@ from explain_to_learn.silver import (
 
 SILVER_DIR = Path("outputs/silver")
 RESULTS_DIR = Path("eval/results")
-
-
-def read_rows(path: Path) -> list[dict]:
-    with path.open(encoding="utf-8") as lines:
-        return [json.loads(line) for line in lines if line.strip()]
 
 
 def generate(args: argparse.Namespace) -> None:
@@ -83,11 +78,7 @@ def generate(args: argparse.Namespace) -> None:
 def filter_outputs(args: argparse.Namespace) -> None:
     edits = {edit.edit_id: edit for edit in read_jsonl(args.edits)}
     kept, counts = filter_silver(read_rows(args.raw), edits)
-
-    args.kept.parent.mkdir(parents=True, exist_ok=True)
-    with args.kept.open("w", encoding="utf-8") as out:
-        for item in kept:
-            out.write(json.dumps(item, ensure_ascii=False) + "\n")
+    write_rows(kept, args.kept)
 
     args.results.mkdir(parents=True, exist_ok=True)
     summary = {"total": sum(counts.values()), **dict(counts)}

@@ -26,7 +26,6 @@ The field names follow the silver training rows (`silver.filter_silver`).
 
 from __future__ import annotations
 
-import json
 from collections.abc import Sequence
 from operator import itemgetter
 from pathlib import Path
@@ -37,7 +36,7 @@ from explain_to_learn.annotation.store import Store
 from explain_to_learn.annotation.task import Task
 from explain_to_learn.edits import Edit, read_jsonl
 from explain_to_learn.generate import OUTPUT_FIELDS
-from explain_to_learn.io import open_graph, read_ids
+from explain_to_learn.io import open_graph, read_ids, read_rows
 from explain_to_learn.prompts import detokenize, prompt_level
 
 OUTPUT_FILE = "gold_explanations.jsonl"
@@ -51,18 +50,14 @@ def read_drafts(paths: Sequence[str | Path]) -> dict[str, dict[str, str]]:
     """
     drafts: dict[str, dict[str, str]] = {}
     for path in paths:
-        with Path(path).open(encoding="utf-8") as lines:
-            for line in lines:
-                if not line.strip():
-                    continue
-                row = json.loads(line)
-                parsed = row.get("parsed")
-                if not parsed:  # the reply was not valid JSON
-                    continue
-                draft = drafts.setdefault(row["edit_id"], dict.fromkeys(OUTPUT_FIELDS, ""))
-                for field in OUTPUT_FIELDS:
-                    if not draft[field] and parsed.get(field):
-                        draft[field] = parsed[field]
+        for row in read_rows(path):
+            parsed = row.get("parsed")
+            if not parsed:  # the reply was not valid JSON
+                continue
+            draft = drafts.setdefault(row["edit_id"], dict.fromkeys(OUTPUT_FIELDS, ""))
+            for field in OUTPUT_FIELDS:
+                if not draft[field] and parsed.get(field):
+                    draft[field] = parsed[field]
     return drafts
 
 

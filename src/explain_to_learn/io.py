@@ -2,15 +2,18 @@
 
 - ID files (`data/splits/*.txt`, `outputs/dev_ids.txt`): one edit ID or essay key per
   line; `read_ids` and `write_ids`.
+- JSON Lines files (run files, silver data, SFT and DPO examples): one JSON object per
+  line; `read_rows` and `write_rows`, and `read_run` for a run file by edit ID.
 
 `open_graph` loads the grammar graph from its folder.
 """
 
 from __future__ import annotations
 
+import json
 from collections.abc import Iterable
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     from explain_to_learn.graph import GrammarGraph
@@ -27,6 +30,29 @@ def write_ids(ids: Iterable[str], path: str | Path) -> None:
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text("".join(f"{i}\n" for i in ids), encoding="utf-8")
+
+
+def read_rows(path: str | Path) -> list[dict[str, Any]]:
+    """Read a JSON Lines file into a list of dictionaries; blank lines are skipped."""
+    with Path(path).open(encoding="utf-8") as lines:
+        return [json.loads(line) for line in lines if line.strip()]
+
+
+def write_rows(rows: Iterable[dict[str, Any]], path: str | Path) -> None:
+    """Write dictionaries to a JSON Lines file, one per line, creating its folder."""
+    path = Path(path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("w", encoding="utf-8") as out:
+        for row in rows:
+            out.write(json.dumps(row, ensure_ascii=False) + "\n")
+
+
+def read_run(path: str | Path) -> dict[str, dict[str, Any]]:
+    """The generation records of a run file (`scripts/run_system.py`) by edit ID.
+
+    If an edit was run more than once, its last record wins.
+    """
+    return {row["edit_id"]: row for row in read_rows(path)}
 
 
 def open_graph(directory: str | Path) -> GrammarGraph:

@@ -29,6 +29,7 @@ from pathlib import Path
 from typing import Any, Protocol
 
 from explain_to_learn.edits import Edit
+from explain_to_learn.io import read_rows
 from explain_to_learn.prompts import build_messages, prompt_level
 
 OUTPUT_FIELDS = ("concept", "explanation", "hint")
@@ -307,11 +308,9 @@ def edit_item(
 
 def done_ids(path: str | Path) -> set[str]:
     """Edit IDs already written to an output file, so a long run can resume."""
-    path = Path(path)
-    if not path.is_file():
+    if not Path(path).is_file():
         return set()
-    with path.open(encoding="utf-8") as lines:
-        return {json.loads(line)["edit_id"] for line in lines if line.strip()}
+    return {row["edit_id"] for row in read_rows(path)}
 
 
 def run_batch(

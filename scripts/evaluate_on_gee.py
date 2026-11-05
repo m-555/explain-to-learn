@@ -45,7 +45,7 @@ from typing import Any
 from explain_to_learn.edits import Edit, read_jsonl
 from explain_to_learn.gee import GEE_FILE, match_edits, read_gee, reference_row
 from explain_to_learn.human_eval import write_csv
-from explain_to_learn.io import read_ids, write_ids
+from explain_to_learn.io import read_ids, read_rows, read_run, write_ids, write_rows
 from explain_to_learn.metrics import faithfulness, paired_bootstrap, shown_text
 from explain_to_learn.prompts import detokenize, prompt_level
 from explain_to_learn.silver import wilson_interval
@@ -53,14 +53,6 @@ from explain_to_learn.silver import wilson_interval
 RUN = "gee"
 GEE_DIR = Path("outputs/gee")
 METRICS = (("covered", "Coverage"), ("faithful", "Faithfulness"))
-
-
-def read_rows(path: Path) -> list[dict[str, Any]]:
-    """A JSON Lines file as a list of dictionaries; empty if there is no file."""
-    if not path.is_file():
-        return []
-    with path.open(encoding="utf-8") as lines:
-        return [json.loads(line) for line in lines if line.strip()]
 
 
 def prepare(args: argparse.Namespace) -> None:
@@ -72,9 +64,7 @@ def prepare(args: argparse.Namespace) -> None:
     counts["matched edits in the gold set"] = sum(m.edit.edit_id in gold for m in matches)
 
     write_ids((m.edit.edit_id for m in matches), args.gee_dir / "edit_ids.txt")
-    with (args.gee_dir / "references.jsonl").open("w", encoding="utf-8") as out:
-        for match in matches:
-            out.write(json.dumps(reference_row(match), ensure_ascii=False) + "\n")
+    write_rows((reference_row(m) for m in matches), args.gee_dir / "references.jsonl")
     (args.gee_dir / "prepare_counts.json").write_text(
         json.dumps(dict(sorted(counts.items())), indent=2) + "\n", encoding="utf-8"
     )
@@ -264,16 +254,18 @@ def side_by_side(
 
 def compare(args: argparse.Namespace) -> None:
     """Score GEE and the systems, write the aggregate report and the teacher's sheet."""
-    references = read_rows(args.gee_dir / "references.jsonl")
+    references_path = args.gee_dir / "references.jsonl"
+    references = read_rows(references_path) if references_path.is_file() else []
     if not references:
         raise SystemExit(f"No references in {args.gee_dir}; run the prepare step first")
     wanted = {r["edit_id"] for r in references}
     edits = {e.edit_id: e for e in read_jsonl(args.edits) if e.edit_id in wanted}
     outputs = {}
     for system in args.systems:
-        rows = read_rows(args.outputs / system / f"{RUN}.jsonl")
+        run_path = args.outputs / system / f"{RUN}.jsonl"
+        rows = read_run(run_path) if run_path.is_file() else {}
         if rows:
-            outputs[system] = {row["edit_id"]: row for row in rows}
+            outputs[system] = rows
         else:
             print(
                 f"No GEE outputs for system {system}; run: evaluate_on_gee.py run --system {system}"

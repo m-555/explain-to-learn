@@ -30,7 +30,6 @@ Usage:
 from __future__ import annotations
 
 import argparse
-import json
 import random
 from collections.abc import Iterable, Mapping
 from pathlib import Path
@@ -39,26 +38,11 @@ from typing import Any
 from explain_to_learn import prompts
 from explain_to_learn.edits import Edit, read_jsonl
 from explain_to_learn.generate import edit_item
-from explain_to_learn.io import open_graph
+from explain_to_learn.io import open_graph, read_rows, write_rows
 
 SYSTEMS = ("c", "d")
 SEED = 42
 VALIDATION_SHARE = 0.05
-
-
-def read_rows(path: str | Path) -> list[dict[str, Any]]:
-    """Read a JSON Lines file into a list of dictionaries."""
-    with Path(path).open(encoding="utf-8") as lines:
-        return [json.loads(line) for line in lines if line.strip()]
-
-
-def write_rows(rows: Iterable[dict[str, Any]], path: str | Path) -> None:
-    """Write dictionaries to a JSON Lines file, one per line."""
-    path = Path(path)
-    path.parent.mkdir(parents=True, exist_ok=True)
-    with path.open("w", encoding="utf-8") as out:
-        for row in rows:
-            out.write(json.dumps(row, ensure_ascii=False) + "\n")
 
 
 def validation_essays(

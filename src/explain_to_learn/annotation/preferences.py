@@ -24,7 +24,6 @@ Each choice is one JSON object in `<out-dir>/preferences.jsonl`:
 
 from __future__ import annotations
 
-import json
 import random
 from collections import Counter
 from collections.abc import Sequence
@@ -36,7 +35,7 @@ from explain_to_learn.annotation.store import Store
 from explain_to_learn.annotation.task import Task
 from explain_to_learn.edits import read_jsonl
 from explain_to_learn.generate import edit_item
-from explain_to_learn.io import open_graph
+from explain_to_learn.io import open_graph, read_run
 from explain_to_learn.metrics import shown_text
 from explain_to_learn.prompts import build_target, detokenize
 
@@ -49,13 +48,6 @@ CHOICES = [
     ("3 Tie: both equally good", "tie"),
     ("4 Both bad", "both_bad"),
 ]
-
-
-def read_run(path: str | Path) -> dict[str, dict[str, Any]]:
-    """Generation records of one run file by edit ID; the last one wins."""
-    with Path(path).open(encoding="utf-8") as lines:
-        rows = [json.loads(line) for line in lines if line.strip()]
-    return {row["edit_id"]: row for row in rows}
 
 
 def build_pairs(

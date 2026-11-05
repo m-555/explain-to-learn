@@ -24,6 +24,8 @@ from collections.abc import Callable, Hashable, Sequence
 from pathlib import Path
 from typing import Any
 
+from explain_to_learn.io import read_rows
+
 Record = dict[str, Any]
 Key = Callable[[Record], Hashable]
 
@@ -42,10 +44,10 @@ def read_records(path: Path) -> list[Record]:
     """Read a CSV file with a header row, or a JSON Lines file; [] if it does not exist."""
     if not path.is_file():
         return []
+    if path.suffix != ".csv":
+        return read_rows(path)
     with path.open(encoding="utf-8", newline="") as file:
-        if path.suffix == ".csv":
-            return list(csv.DictReader(file))
-        return [json.loads(line) for line in file if line.strip()]
+        return list(csv.DictReader(file))
 
 
 def format_records(records: Sequence[Record], path: Path, columns: Sequence[str] | None) -> str:

@@ -36,8 +36,9 @@ from pathlib import Path
 from typing import Any
 
 from explain_to_learn.generate import OUTPUT_FIELDS
+from explain_to_learn.io import read_rows, write_rows
 from explain_to_learn.prompts import build_target
-from explain_to_learn.train_data import read_rows, validation_essays, write_rows
+from explain_to_learn.train_data import validation_essays
 
 SEED = 42
 # Preference data is small, so a larger share than for SFT keeps the validation set usable.

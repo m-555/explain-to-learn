@@ -17,11 +17,10 @@ and needs the `model` extra; it is off by default.
 from __future__ import annotations
 
 import argparse
-import json
 from pathlib import Path
 
 from explain_to_learn.edits import read_jsonl
-from explain_to_learn.io import open_graph, read_ids
+from explain_to_learn.io import open_graph, read_ids, read_run
 from explain_to_learn.metrics import (
     breakdown,
     correction_f05,
@@ -39,12 +38,8 @@ DEFAULT_COMPARISONS = ("B:A", "C:A", "D:B", "D:C")
 
 
 def read_outputs(path: Path) -> dict[str, dict]:
-    """Output rows by edit ID; the last row wins if an edit was run twice."""
-    if not path.is_file():
-        return {}
-    with path.open(encoding="utf-8") as lines:
-        rows = [json.loads(line) for line in lines if line.strip()]
-    return {row["edit_id"]: row for row in rows}
+    """Output rows by edit ID (the last row wins); empty if the run has no file."""
+    return read_run(path) if path.is_file() else {}
 
 
 def score_system(outputs, edits, graph, terms, mode, contradiction_check=None) -> list[dict]:

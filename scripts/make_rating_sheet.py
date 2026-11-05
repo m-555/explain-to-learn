@@ -23,25 +23,17 @@ Usage:
 from __future__ import annotations
 
 import argparse
-import json
 import random
 from pathlib import Path
 from typing import Any
 
 from explain_to_learn.edits import Edit, read_jsonl
 from explain_to_learn.human_eval import KEY_COLUMNS, RATING_COLUMNS, SHEET_COLUMNS, write_csv
-from explain_to_learn.io import read_ids
+from explain_to_learn.io import read_ids, read_run
 from explain_to_learn.metrics import shown_text
 from explain_to_learn.prompts import detokenize, prompt_level
 
 SEED = 2025
-
-
-def read_outputs(path: str | Path) -> dict[str, dict[str, Any]]:
-    """One system's generation records by edit ID."""
-    with Path(path).open(encoding="utf-8") as lines:
-        rows = [json.loads(line) for line in lines if line.strip()]
-    return {row["edit_id"]: row for row in rows}
 
 
 def build_items(
@@ -131,7 +123,7 @@ def main() -> None:
 
     gold_ids = read_ids(args.gold_ids)
     edits = {edit.edit_id: edit for edit in read_jsonl(args.edits)}
-    outputs = {name: read_outputs(path) for name, path in args.system}
+    outputs = {name: read_run(path) for name, path in args.system}
     sheet, second, key = make_sheets(
         gold_ids, edits, outputs, args.n_edits, args.n_second, args.seed
     )
