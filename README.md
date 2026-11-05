@@ -91,7 +91,7 @@ explain-to-learn explain "She don't like to going to school." --level A2 --mode 
 explain-to-learn summary essay.txt --level B1
 ```
 
-GPU work (generation, training, evaluation) runs on an RTX 5090 in WSL2 or Docker. [docs/experiments.md](docs/experiments.md) is the complete runbook, from the environment to the release; [docs/gpu_setup.md](docs/gpu_setup.md) covers the Blackwell (`sm_120`) setup, which needs a PyTorch build for CUDA 12.8 or newer.
+GPU work (generation, training, evaluation) runs on an RTX 5090 in WSL2 or Docker. [docs/experiments.md](docs/experiments.md) is the complete runbook, from the environment to the release; [docs/gpu_setup.md](docs/gpu_setup.md) covers the Blackwell (`sm_120`) setup, which needs PyTorch 2.14.1 built for CUDA 13.0 (`cu130`). Other extras: `data` (ERRANT and spaCy), `model`, `train` and `analysis` (report figures and notebooks).
 
 ## The grammar graph
 
@@ -112,7 +112,7 @@ The prerequisite links form a directed acyclic graph, so the teacher summary can
 - **Analysis.** Paired bootstrap confidence intervals for B−A, C−A, D−B and D−C, broken down by error type and learner level.
 - **Correction.** For the end-to-end pipeline, the correction step is scored separately with ERRANT (span-based F0.5) on the W&I+LOCNESS dev set, overall and per level.
 
-Only aggregate results are published, in [eval/results/](eval/results/).
+Only aggregate results are published, in [eval/results/](eval/results/). [docs/annotation_guide.md](docs/annotation_guide.md) describes the local annotation app used for the gold explanations, the ratings and the silver hand-check, and [docs/design_decisions.md](docs/design_decisions.md) explains the reasons behind these choices.
 
 ## Limitations
 
@@ -154,7 +154,8 @@ Code items are ticked when the code is done; experiments are ticked when they ha
 ├── train/                     # LoRA configuration and training script
 ├── eval/                      # rubric and aggregate results
 ├── demo/                      # Gradio app and its preview stubs
-├── docs/                      # experiment runbook, GPU setup
+├── docs/                      # experiment runbook, GPU setup, annotation guide, design decisions
+├── notebooks/                 # data statistics and results analysis
 ├── report/                    # ACL-format report
 ├── data/splits/               # essay split and gold edit IDs (no learner text)
 └── tests/
@@ -172,7 +173,7 @@ Data:
 Methods and tools:
 
 - ERRANT (MIT licence): Bryant, Felice and Briscoe (2017), *Automatic Annotation and Evaluation of Error Types for Grammatical Error Correction*, ACL; and Felice, Bryant and Briscoe (2016), *Automatic Extraction of Learner Errors in ESL Sentences Using Linguistically Enhanced Alignments*, COLING.
-- GEE: Song, Krishna, Bhatt, Gimpel and Iyyer (2024), *GEE! Grammar Error Explanation with Large Language Models*, Findings of NAACL. Its data is used for the explanation format and as a comparison point.
+- GEE: Song, Krishna, Bhatt, Gimpel and Iyyer (2024), *GEE! Grammar Error Explanation with Large Language Models*, Findings of NAACL. Its data is used for the explanation format and as a comparison point. The GEE repository has no licence file, so its data is used locally and not redistributed.
 - BEA 2025 shared task: Kochmar et al. (2025), *Findings of the BEA 2025 Shared Task on Pedagogical Ability Assessment of AI-powered Tutors*, BEA workshop. The rating rubric adapts its dimensions.
 - LoRA: Hu et al. (2021), *LoRA: Low-Rank Adaptation of Large Language Models*.
 - Correction model: Rothe, Mallinson, Malmi, Krause and Severyn (2021), *A Simple Recipe for Multilingual Grammatical Error Correction*, ACL, as implemented in Unbabel/gec-t5_small.

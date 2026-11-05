@@ -20,6 +20,7 @@ edit IDs and aggregate tables, so that anyone with the corpora can rebuild the d
 | Grammar graph (`grammar_graph/`) | Concept, rule and example for each error type | MIT, with the code |
 | Silver explanations | Training targets for systems C and D | Inherits the corpus terms |
 | Gold set and ratings | Evaluation | Inherits the corpus terms |
+| GEE data (Song et al., 2024) | Comparison point for explanations (English examples) | No licence file: used locally, never redistributed |
 
 The corpora must be downloaded from the
 [BEA-2019 shared-task page](https://www.cl.cam.ac.uk/research/nl/bea2019st/) under their

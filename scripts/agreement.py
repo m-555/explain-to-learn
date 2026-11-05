@@ -16,6 +16,11 @@ Usage:
     python scripts/agreement.py --first outputs/human_eval/ratings_rater1.csv \
         --second outputs/human_eval/ratings_rater2.csv --title "Rater 1 vs rater 2" \
         --out eval/results/agreement_raters.md
+    python scripts/agreement.py --first outputs/human_eval/ratings_rater1.csv \
+        --second outputs/human_eval/ratings_llm_judge.csv --title "LLM judge vs rater 1" \
+        --out eval/results/agreement_judge.md
+
+`scripts/make_report_assets.py` reads both tables from these default paths.
 """
 
 from __future__ import annotations

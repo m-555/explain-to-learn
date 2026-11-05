@@ -39,5 +39,5 @@ jobs:
           cache: pip
       - name: Install
         run: pip install -e ".[dev,graph,generate,demo]"
-      - name: Build the demo in preview mode
-        run: pytest -q -rs tests/test_demo.py
+      - name: Build the demo and the annotation app
+        run: pytest -q -rs tests/test_demo.py tests/test_annotation_app.py

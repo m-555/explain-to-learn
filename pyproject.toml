@@ -20,7 +20,7 @@ explain-to-learn = "explain_to_learn.cli:main"
 dev = ["pytest>=8.0", "ruff==0.17.3"]
 data = ["errant>=3.0", "spacy>=3.7"]
 graph = ["networkx>=3.2", "pyyaml>=6.0", "rdflib>=7.0", "matplotlib>=3.8"]
-# PyTorch is installed separately (CUDA 12.8 or newer build), see README.
+# PyTorch is installed separately (2.14.1 for CUDA 13.0), see docs/gpu_setup.md.
 model = [
     "transformers>=4.56",
     "peft>=0.13",
